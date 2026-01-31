@@ -12,7 +12,7 @@ use App\Shared\Exception\UnauthorizedException;
 use App\Shared\Exception\ConflictException;
 use App\Shared\Logger\Logger;
 
-class ErrorMiddleware implements MiddlewareInterface
+final class ErrorMiddleware implements MiddlewareInterface
 {
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
@@ -30,10 +30,16 @@ class ErrorMiddleware implements MiddlewareInterface
             };
 
             $response = new Response($status);
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage(),
-                'type' => $e::class,
-            ]));
+
+            $payload = [
+                'success' => false,
+                'message' => ($_ENV['APP_ENV'] ?? 'production') === 'production'
+                    ? 'Internal server error'
+                    : $e->getMessage()
+            ];
+
+            $response->getBody()->write(json_encode($payload));
+
 
             return $response->withHeader('Content-Type', 'application/json');
         }

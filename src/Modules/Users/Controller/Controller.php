@@ -20,50 +20,27 @@ class Controller
     {
         Logger::log("Listing all users");
 
-        try {
-            $users = $this->userService->listUsers();
+        $users = $this->userService->listUsers();
 
-            $response->getBody()->write(json_encode($users));
+        $response->getBody()->write(json_encode($users));
 
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(200);
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(200);
 
-        } catch (\Exception $e) {
-            Logger::log("List user error ", $e->getMessage());
-
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ]));
-
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(422);
-        }
 
     }
 
     public function getUser(Request $request, Response $response, array $args): Response
     {
-        try {
-            $user = $this->userService->getUser($args['uuid']);
+        $user = $this->userService->getUser($args['uuid']);
 
-            $response->getBody()->write(json_encode($user));
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(200);
+        $response->getBody()->write(json_encode($user));
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(200);
 
-        } catch (\Exception $e) {
-            Logger::log("List user error ", $e->getMessage());
 
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ]));
-
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(422);
-        }
     }
 
     public function create(Request $request, Response $response): Response
@@ -82,39 +59,20 @@ class Controller
                 ->withStatus(422);
         }
 
-        try {
-            Logger::log("Start create user");
+        Logger::log("Start create user");
 
-            $user = $this->userService->createUser($data);
+        $user = $this->userService->createUser($data);
 
-            $response->getBody()->write(json_encode([
-                'uuid' => $user->getUuid(),
-                'username' => $user->getUsername(),
-            ]));
+        $response->getBody()->write(json_encode([
+            'uuid' => $user->getUuid(),
+            'username' => $user->getUsername(),
+        ]));
 
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(201);
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(201);
 
-        } catch (\RuntimeException $e) {
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ]));
 
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(422);
-        } catch (\Exception $e) {
-            Logger::log("Created user error ", $e->getMessage());
-
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ]));
-
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(422);
-        }
     }
 
     public function update(Request $request, Response $response, array $args): Response
@@ -134,30 +92,20 @@ class Controller
                 ->withStatus(422);
         }
 
-        try {
-            Logger::log("Start update user");
+        Logger::log("Start update user");
 
-            $updatedUser = $this->userService->updateUserByUuid($uuid, $data);
+        $updatedUser = $this->userService->updateUserByUuid($uuid, $data);
 
-            $response->getBody()->write(json_encode([
-                    "message" => "User was successfully updated",
-                    "data" => $updatedUser
-                ]
-            ));
+        $response->getBody()->write(json_encode([
+                "message" => "User was successfully updated",
+                "data" => $updatedUser
+            ]
+        ));
 
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(200);
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(200);
 
-        } catch (\RuntimeException $e) {
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ]));
-
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(422);
-        }
     }
 
     public function delete(Request $request, Response $response, array $args): Response
@@ -165,26 +113,15 @@ class Controller
         $uuid = $args['uuid'];
         Logger::log("Deleting user with uuid: ", $uuid);
 
-        try {
-            $this->userService->deleteUserByUuid($uuid);
+        $this->userService->deleteUserByUuid($uuid);
 
-            $response->getBody()->write(json_encode([
-                'message' => 'User deleted successfully'
-            ]));
+        $response->getBody()->write(json_encode([
+            'message' => 'User deleted successfully'
+        ]));
 
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(200);
-
-        } catch (\RuntimeException $e) {
-            $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ]));
-
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(422);
-        }
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(200);
 
 
     }

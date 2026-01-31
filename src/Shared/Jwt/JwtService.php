@@ -3,6 +3,7 @@
 namespace App\Shared\Jwt;
 
 use App\Modules\Auth\Repository\AuthRepository;
+use App\Shared\Exception\ValidationException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use App\Shared\Logger\Logger;
@@ -15,11 +16,12 @@ final class JwtService
 
     public function __construct(
         private AuthRepository $repo,
-        ?string $secret = null,
-        ?int $expire = null
-    ) {
+        ?string                $secret = null,
+        ?int                   $expire = null
+    )
+    {
         $this->secret = $secret ?? $_ENV['JWT_SECRET'];
-        $this->expire = $expire ?? (int) ($_ENV['JWT_EXPIRE'] ?? 3600);
+        $this->expire = $expire ?? (int)($_ENV['JWT_EXPIRE'] ?? 3600);
     }
 
     public function generate(array $payload): string
@@ -37,7 +39,7 @@ final class JwtService
     public function validate(string $token): array
     {
 
-        return (array) JWT::decode($token, new Key($this->secret, 'HS256'));
+        return (array)JWT::decode($token, new Key($this->secret, 'HS256'));
     }
 
     /**
@@ -52,6 +54,11 @@ final class JwtService
 
     public function validateRefreshToken(string $token): int
     {
-        return $this->repo->validateRefresh($token);
+        try {
+            return $this->repo->validateRefresh($token);
+        } catch (\Exception $e) {
+            throw new ValidationException('Invalid refresh token');
+
+        }
     }
 }

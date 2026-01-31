@@ -5,6 +5,7 @@ namespace App\Modules\Auth;
 use Slim\Interfaces\RouteCollectorProxyInterface;
 use App\Middleware\JwtMiddleware;
 use App\Modules\Auth\Controller\Controller;
+use App\Middleware\ErrorMiddleware;
 
 class Routes
 {
@@ -21,6 +22,6 @@ class Routes
             $group->post('/logout', [Controller::class, 'logout'])
                 ->add(JwtMiddleware::class);
 
-        });
+        })->add(ErrorMiddleware::class);
     }
 }

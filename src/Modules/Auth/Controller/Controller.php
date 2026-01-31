@@ -64,7 +64,6 @@ readonly class Controller
                 ->withStatus(400);
         }
 
-        try {
             $userId = $this->jwtService->validateRefreshToken($refreshToken);
             $accessToken = $this->jwtService->generate([
                 'sub' => $userId,
@@ -77,12 +76,6 @@ readonly class Controller
 
             $response->getBody()->write(json_encode($payload));
             return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $payload = ['error' => $e->getMessage()];
-            $response->getBody()->write(json_encode($payload));
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(401);
-        }
+
     }
 }

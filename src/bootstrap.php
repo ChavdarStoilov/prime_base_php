@@ -8,6 +8,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use DI\Container;
 use App\Shared\Database\Database;
 use App\Shared\Logger\Logger;
+use App\Middleware\ErrorMiddleware;
 
 
 return function (App $app, Container $container): void {
@@ -33,36 +34,10 @@ return function (App $app, Container $container): void {
         true
     );
 
-    $errorMiddleware->setDefaultErrorHandler(
-        function (Request $request, Throwable $exception) {
-            $response = new Response();
-
-            Logger::log('Unhandled Exception', [
-                'message' => $exception->getMessage(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'trace' => $exception->getTraceAsString(),
-                'request' => [
-                    'method' => $request->getMethod(),
-                    'uri' => (string)$request->getUri(),
-                    'body' => (string)$request->getBody(),
-                    'headers' => $request->getHeaders(),
-                ],
-            ]);
-
-            $payload = [
-                'success' => false,
-                'message' => ($_ENV['APP_ENV'] ?? 'production') === 'production'
-                    ? 'Internal server error'
-                    : $exception->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($payload));
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(500);
-        }
-    );
+//    $errorMiddleware->setDefaultErrorHandler(ErrorMiddleware::class);
+//
+//
+//    );
 
     (require __DIR__ . '/Routes/api.php')($app);
 };

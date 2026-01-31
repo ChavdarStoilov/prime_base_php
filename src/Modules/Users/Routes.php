@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Modules\Users;
+
+use Slim\Interfaces\RouteCollectorProxyInterface;
+use App\Middleware\JwtMiddleware;
+use App\Modules\Users\Controller\Controller;
+use App\Middleware\UuidMiddleware;
+use App\Middleware\ErrorMiddleware;
+
+class Routes
+{
+    public static function register(RouteCollectorProxyInterface $group): void
+    {
+        $group->group('/users', function (RouteCollectorProxyInterface $group) {
+
+            $group->post('/create', [Controller::class, 'create']);
+
+            $group->get('/', [Controller::class, 'list']);
+
+            $group->get('/{uuid}', [Controller::class, 'getUser'])
+                ->add(UuidMiddleware::class);
+
+            $group->put('/update/{uuid}', [Controller::class, 'update'])
+                ->add(UuidMiddleware::class);
+
+            $group->delete('/delete/{uuid}', [Controller::class, 'delete'])
+                ->add(UuidMiddleware::class);
+
+        })->add(JwtMiddleware::class)
+        ->add(ErrorMiddleware::class);
+    }
+}

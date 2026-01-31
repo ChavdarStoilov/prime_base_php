@@ -1,12 +1,15 @@
 <?php
 
+
 namespace App\Middleware;
 
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
+use Slim\Psr7\Response as SlimResponse;
 use Slim\Routing\RouteContext;
 use Ramsey\Uuid\Uuid;
+
 final class UuidMiddleware
 {
 
@@ -32,9 +35,13 @@ final class UuidMiddleware
 
     private function error(string $msg, int $code): Response
     {
-        $response = new ($code);
-        $response->getBody()->write(json_encode(['error' => $msg]));
-        return $response->withHeader('Content-Type', 'application/json');
+        $response = new SlimResponse($code);
+        $response->getBody()->write(json_encode([
+            'error' => $msg
+        ]));
+
+        return $response->withStatus(400);
+
     }
 }
 

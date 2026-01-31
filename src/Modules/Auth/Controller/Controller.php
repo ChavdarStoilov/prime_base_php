@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Modules\Auth\Controller;
 
 use App\Shared\Jwt\JwtService;
@@ -10,8 +11,10 @@ readonly class Controller
 {
     public function __construct(
         private AuthService $authService,
-        private JwtService $jwtService
-    ) {}
+        private JwtService  $jwtService
+    )
+    {
+    }
 
     /**
      * Login user and generate access + refresh token
@@ -25,11 +28,8 @@ readonly class Controller
         $user = $this->authService->authenticate($username, $password);
 
         if (!$user) {
-            $payload = ['error' => 'Invalid credentials'];
-            $response->getBody()->write(json_encode($payload));
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(401);
+            $response->getBody()->write(json_encode(['error' => 'Invalid credentials']));
+            return $response->withStatus(401);
         }
 
         $token = $this->jwtService->generate([
@@ -38,14 +38,14 @@ readonly class Controller
 
         $refreshToken = $this->jwtService->generateRefreshToken($user->getId());
 
-        $payload = [
+
+        $response->getBody()->write(json_encode([
             'access_token' => $token,
             'refresh_token' => $refreshToken,
             'expires_in' => 3600
-        ];
+        ]));
+        return $response->withStatus(200);
 
-        $response->getBody()->write(json_encode($payload));
-        return $response->withHeader('Content-Type', 'application/json');
     }
 
     /**
@@ -57,25 +57,22 @@ readonly class Controller
         $refreshToken = $data['refresh_token'] ?? null;
 
         if (!$refreshToken) {
-            $payload = ['error' => 'Refresh token missing'];
-            $response->getBody()->write(json_encode($payload));
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(400);
+
+            $response->getBody()->write(json_encode(['error' => 'Refresh token missing']));
+            return $response->withStatus(400);
+
         }
 
-            $userId = $this->jwtService->validateRefreshToken($refreshToken);
-            $accessToken = $this->jwtService->generate([
-                'sub' => $userId,
-            ]);
+        $userId = $this->jwtService->validateRefreshToken($refreshToken);
+        $accessToken = $this->jwtService->generate([
+            'sub' => $userId,
+        ]);
 
-            $payload = [
-                'access_token' => $accessToken,
-                'expires_in' => 3600
-            ];
 
-            $response->getBody()->write(json_encode($payload));
-            return $response->withHeader('Content-Type', 'application/json');
-
+        $response->getBody()->write(json_encode([
+            'access_token' => $accessToken,
+            'expires_in' => 3600
+        ]));
+        return $response->withStatus(200);
     }
 }

@@ -6,7 +6,6 @@ use Slim\Interfaces\RouteCollectorProxyInterface;
 use App\Middleware\JwtMiddleware;
 use App\Modules\Users\Controller\Controller;
 use App\Middleware\UuidMiddleware;
-use App\Middleware\ErrorMiddleware;
 
 class Routes
 {
@@ -27,7 +26,6 @@ class Routes
             $group->delete('/delete/{uuid}', [Controller::class, 'delete'])
                 ->add(UuidMiddleware::class);
 
-        })->add(JwtMiddleware::class)
-        ->add(ErrorMiddleware::class);
+        })->add(JwtMiddleware::class);
     }
 }

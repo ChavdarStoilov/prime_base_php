@@ -24,11 +24,7 @@ class Controller
 
         $response->getBody()->write(json_encode($users));
 
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(200);
-
-
+        return $response->withStatus(200);
     }
 
     public function getUser(Request $request, Response $response, array $args): Response
@@ -36,10 +32,8 @@ class Controller
         $user = $this->userService->getUser($args['uuid']);
 
         $response->getBody()->write(json_encode($user));
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(200);
 
+        return $response->withStatus(200);
 
     }
 
@@ -50,13 +44,13 @@ class Controller
         Logger::log("Provided date for create user: ", $data);
 
         if (empty($data)) {
+
             $response->getBody()->write(json_encode([
                 'error' => 'Invalid data'
             ]));
 
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(422);
+            return $response->withStatus(422);
+
         }
 
         Logger::log("Start create user");
@@ -68,10 +62,7 @@ class Controller
             'username' => $user->getUsername(),
         ]));
 
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(201);
-
+        return $response->withStatus(201);
 
     }
 
@@ -83,28 +74,26 @@ class Controller
         Logger::log("Provided date for update user {$uuid}: ", $data);
 
         if (empty($data)) {
+
             $response->getBody()->write(json_encode([
                 'error' => 'Invalid data'
             ]));
 
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(422);
+            return $response->withStatus(422);
         }
 
         Logger::log("Start update user");
 
         $updatedUser = $this->userService->updateUserByUuid($uuid, $data);
 
-        $response->getBody()->write(json_encode([
-                "message" => "User was successfully updated",
-                "data" => $updatedUser
-            ]
-        ));
 
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(200);
+        $response->getBody()->write(json_encode([
+            "message" => "User was successfully updated",
+            "data" => $updatedUser
+        ]));
+
+        return $response->withStatus(200);
+
 
     }
 
@@ -119,11 +108,7 @@ class Controller
             'message' => 'User deleted successfully'
         ]));
 
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(200);
-
-
+        return $response->withStatus(200);
     }
 
 }

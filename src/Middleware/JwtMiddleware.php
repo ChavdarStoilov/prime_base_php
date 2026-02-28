@@ -1,8 +1,10 @@
 <?php
 namespace App\Middleware;
 
+use App\Modules\Users\Service\UserService;
 use App\Shared\Jwt\JwtService;
 use Slim\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as Handler;
@@ -13,9 +15,12 @@ use Firebase\JWT\BeforeValidException;
 
 final class JwtMiddleware implements MiddlewareInterface
 {
-    public function __construct(private JwtService $jwt) {}
+    public function __construct(
+        private JwtService $jwt,
+        private UserService $userService
+    ) {}
 
-    public function process(Request $request, Handler $handler): Response
+    public function process(Request $request, Handler $handler): ResponseInterface
     {
         $header = $request->getHeaderLine('Authorization');
 
@@ -26,15 +31,22 @@ final class JwtMiddleware implements MiddlewareInterface
         try {
             $payload = $this->jwt->validate($matches[1]);
 
-            return $handler->handle(
-                $request->withAttribute('user', $payload)
-            );
+            $userUuid = $payload['sub'];
+
+            $user = $this->userService->getUser($userUuid, true);
+
+            $request = $request->withAttribute('current_user', [
+                'id' => $user->getUserId(),
+                'uuid' => $user->getUuid(),
+            ]);
+
+            return $handler->handle($request);
+
         } catch (ExpiredException | BeforeValidException $e) {
-            Logger::log("JWT error: ", $e->getMessage());
+            Logger::log("JWT error: " . $e->getMessage());
             return $this->unauthorized('Token expired');
         } catch (SignatureInvalidException $error) {
-            Logger::log("JWT error: ", $error->getMessage());
-
+            Logger::log("JWT error: " . $error->getMessage());
             return $this->unauthorized('Invalid token');
         }
     }
@@ -42,7 +54,7 @@ final class JwtMiddleware implements MiddlewareInterface
     private function unauthorized(string $msg): Response
     {
         $res = new Response();
-        $res->getBody()->write(json_encode(['error' => $msg]));
+        $res->getBody()->write(json_encode(['error' => $msg], JSON_THROW_ON_ERROR));
         return $res->withStatus(401)->withHeader('Content-Type', 'application/json');
     }
 }

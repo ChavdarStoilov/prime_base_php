@@ -13,23 +13,32 @@ class Database
     /**
      * @param array $config
      */
-    private function __construct(array $config)
+    public function __construct(array $config)
     {
-        $host = $config['host'] ?? '';
-        $user = $config['user'] ?? '';
-        $port = $config['port'] ?? '';
-        $db = $config['db'] ?? '';
-        $charset = $config['charset'] ?? 'utf8mb4';
-        $password = $config['password'] ?? '';
+        $driver = $config['driver'] ?? 'mysql';
         $options = $config['options'] ?? [];
 
-        $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
-
         try {
-            $this->pdo = new PDO($dsn, $user, $password, $options);
+            if ($driver === 'sqlite') {
+                $file = $config['database'] ?? ':memory:';
+                $dsn = "sqlite:$file";
+                $this->pdo = new PDO($dsn, null, null, $options);
+            } else {
+                $host = $config['host'] ?? '';
+                $user = $config['user'] ?? '';
+                $port = $config['port'] ?? '';
+                $db = $config['db'] ?? '';
+                $charset = $config['charset'] ?? 'utf8mb4';
+                $password = $config['password'] ?? '';
+
+                $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
+                $this->pdo = new PDO($dsn, $user, $password, $options);
+            }
+
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
+
+        } catch (\PDOException $e) {
             die('Database connection failed: ' . $e->getMessage());
         }
     }
@@ -286,5 +295,13 @@ class Database
     public function rollback(): void
     {
         $this->pdo->rollBack();
+    }
+
+
+    public function execute(string $sql): int
+    {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->rowCount();
     }
 }

@@ -3,15 +3,16 @@
 namespace App\Modules\Auth\Repository;
 
 use App\Shared\Database\Database;
-use RuntimeException;
+use App\Shared\Exception\ConflictException;
+use App\Shared\Exception\NotFoundException;
 
 class AuthRepository
 {
     private Database $db;
 
-    public function __construct()
+    public function __construct(Database $db)
     {
-        $this->db = Database::get();
+        $this->db = $db;
     }
 
     /**
@@ -28,7 +29,7 @@ class AuthRepository
             ]);
         } catch (\Exception $e) {
             if (strpos($e->getMessage(), '23000') !== false) {
-                throw new RuntimeException("Token already exists.");
+                throw new ConflictException("Token already exists.");
             }
             throw $e;
         }
@@ -40,29 +41,37 @@ class AuthRepository
     public function validateRefresh(string $refreshToken): ?string
     {
         $result = $this->db->select(
-            'refresh_tokens r JOIN users u ON u.user_id = r.user_id',
+            'refresh_tokens r JOIN users u ON u.id = r.user_id',
             [
                 'AND' => [
                     ['r.token', '=', $refreshToken],
                     ['r.revoked', '=', 0],
-                    ['r.expires_at', '>', date('Y-m-d H:i:s')],
+                    ['r.expires_at', '>', (new \DateTimeImmutable())->format('Y-m-d H:i:s')],
+                    ['u.is_active', '=', 1]
                 ]
             ],
-            ['u.user_id'],
+            ['u.uuid'],
             '',
             1
         );
 
-        return $result[0]['user_id'] ?? null;
+
+        return $result[0]['uuid'] ?? null;
     }
 
-    public function storeRefreshToken(int $userId, string $token, int $expireSeconds = 604800): int
+    public function storeRefreshToken(string $userUUID, string $token, int $expireSeconds): int
     {
+        $result = $this->db->select('users', ['uuid' => $userUUID], ['id'], '', 1);
+        if (!$result) {
+            throw new NotFoundException('User not found.');
+        }
+
+        $userId = $result[0]['id'];
         $data = [
-            'user_id'    => $userId,
-            'token'      => $token,
-            'expires_at' => date('Y-m-d H:i:s', time() + $expireSeconds),
-            'revoked'    => 0,
+            'user_id' => $userId,
+            'token' => $token,
+            'expires_at' => (new \DateTimeImmutable("+$expireSeconds seconds"))->format('Y-m-d H:i:s'),
+            'revoked' => 0,
         ];
 
         return $this->db->insert('refresh_tokens', $data);

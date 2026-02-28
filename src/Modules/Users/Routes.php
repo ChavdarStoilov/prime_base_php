@@ -4,7 +4,7 @@ namespace App\Modules\Users;
 
 use Slim\Interfaces\RouteCollectorProxyInterface;
 use App\Middleware\JwtMiddleware;
-use App\Modules\Users\Controller\Controller;
+use App\Modules\Users\Controller\UsersController;
 use App\Middleware\UuidMiddleware;
 
 class Routes
@@ -13,17 +13,17 @@ class Routes
     {
         $group->group('/users', function (RouteCollectorProxyInterface $group) {
 
-            $group->post('/create', [Controller::class, 'create']);
+            $group->post('/create', [UsersController::class, 'create']);
 
-            $group->get('/', [Controller::class, 'list']);
+            $group->get('/', [UsersController::class, 'list']);
 
-            $group->get('/{uuid}', [Controller::class, 'getUser'])
+            $group->get('/{uuid}', [UsersController::class, 'getUser'])
                 ->add(UuidMiddleware::class);
 
-            $group->put('/update/{uuid}', [Controller::class, 'update'])
+            $group->put('/update/{uuid}', [UsersController::class, 'update'])
                 ->add(UuidMiddleware::class);
 
-            $group->delete('/delete/{uuid}', [Controller::class, 'delete'])
+            $group->delete('/delete/{uuid}', [UsersController::class, 'delete'])
                 ->add(UuidMiddleware::class);
 
         })->add(JwtMiddleware::class);

@@ -1,24 +1,40 @@
 <?php
 namespace App\Modules\Auth\Service;
 
-use App\Modules\Users\Controller\Domain\User;
+use App\Modules\Users\Domain\User;
 use App\Modules\Users\Repository\UserRepository;
+use App\Shared\Exception\ValidationException;
 
 class AuthService
 {
-
     private UserRepository $repository;
-    public function __construct(UserRepository $repository) {
+
+    public function __construct(UserRepository $repository)
+    {
         $this->repository = $repository;
     }
 
+    /**
+     * Authenticate user by username and password
+     */
     public function authenticate(string $username, string $password): ?User
     {
-        $user = $this->repository->findByUsername($username);
+        $username = trim($username);
+        if (empty($username) || empty($password)) {
+            throw new ValidationException('Username and password are required');
+        }
 
-        if (!$user) {
+        $response = $this->repository->findByUsername($username);
+        if (!$response) {
             return null;
         }
+
+        $user = new User(
+            $response['id'],
+            $response['uuid'],
+            $response['username'],
+            $response['password'] ?? null
+        );
 
         if (password_verify($password, $user->getPassword())) {
             return $user;

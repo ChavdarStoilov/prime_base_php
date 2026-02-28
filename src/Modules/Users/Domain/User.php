@@ -1,36 +1,40 @@
 <?php
 
-namespace App\Modules\Users\Controller\Domain;
+namespace App\Modules\Users\Domain;
 
 class User
 {
-    private int $id;
+
+    private $userId;
     private string $uuid;
     private string $username;
     private string $password;
     private int $isActive;
-    private string $roleId;
+    readonly string $createdAt;
+    readonly string $updatedAt;
 
     public function __construct(
-        int    $id,
+        int    $userId = 0,
         string $uuid = '',
         string $username = '',
         string $password = '',
         int    $isActive = 0,
-        int    $roleId = 0
+        string $createdAt = '',
+        string $updatedAt = ''
     )
     {
-        $this->id = $id;
+        $this->userId = $userId;
         $this->uuid = $uuid;
         $this->username = $username;
         $this->password = $password;
         $this->isActive = $isActive;
-        $this->roleId = $roleId;
+        $this->createdAt = $createdAt;
+        $this->updatedAt = $updatedAt;
     }
 
-    public function getId(): int
-    {
-        return $this->id;
+
+    public function getUserId(): int {
+        return $this->userId;
     }
 
     public function getUuid(): string
@@ -53,11 +57,6 @@ class User
         return $this->isActive;
     }
 
-    public function getRoleId(): int
-    {
-        return $this->roleId;
-    }
-
     public function setPassword($newPassword): void
     {
         $this->password = $newPassword;
@@ -70,31 +69,34 @@ class User
 
     }
 
-    public function setRoleId(int $roleId): void
-    {
-        $this->roleId = $roleId;
-    }
 
     public function toArray(): array
     {
         return [
-            "user_id" => $this->id,
-            "user_uuid" => $this->uuid,
+            "uuid" => $this->uuid,
             "username" => $this->username,
             "password" => $this->password,
-            "is_active" => $this->isActive,
-            "role_id" => $this->roleId
+            "is_active" => $this->isActive
         ];
     }
 
     public function toPublicArray(): array
     {
         return [
-            'id'        => $this->getId(),
-            'uuid'      => $this->getUuid(),
-            'username'  => $this->getUsername(),
+            'uuid' => $this->getUuid(),
+            'username' => $this->getUsername(),
             'is_active' => $this->isActive(),
-            'role_id'   => $this->getRoleId(),
+            "created_at" => $this->createdAt,
+            "updated_at" => $this->updatedAt
+
+        ];
+    }
+
+    public function apiArray(): array
+    {
+        return [
+            'uuid' => $this->getUuid(),
+            'username' => $this->getUsername(),
         ];
     }
 }

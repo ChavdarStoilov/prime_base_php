@@ -3,126 +3,129 @@
 namespace App\Modules\Users\Repository;
 
 use App\Shared\Database\Database;
-use App\Modules\Users\Controller\Domain\User;
-use RuntimeException;
-use App\Shared\Logger\Logger;
+use App\Shared\Exception\ConflictException;
+use Exception;
 
 class UserRepository
 {
     private Database $db;
 
-    public function __construct()
+    public function __construct(Database $db)
     {
-        $this->db = Database::get();
+        $this->db = $db;
     }
 
 
-    public function getAllUsers()
+    /**
+     * @return array
+     */
+    public function getAllUsers(): array
     {
         return $this->db->select(
             "users",
             [],
-            ['user_uuid', 'username', 'is_active', 'role_id', 'created_at', 'updated_at']
+            ['uuid', 'username', 'is_active', 'created_at', 'updated_at']
         );
     }
 
     /**
-     * Create a new user
+     * @param array $user
+     * @return int|null
+     * @throws Exception
      */
-    public function createUser(array $user): User
+    public function createUser(array $user): ?int
     {
 
-        $id = $this->db->insert('users', [
-            'user_uuid' => $user['uuid'],
-            'username' => $user['username'],
-            'password' => $user['password'],
-            'is_active' => $user['is_active'],
-            'role_id' => $user['role_id'],
-            'created_at' => $user['created_at'],
-        ]);
+        try {
 
+            $id = $this->db->insert('users', [
+                'uuid' => $user['uuid'],
+                'username' => $user['username'],
+                'password' => $user['password'],
+                'is_active' => $user['is_active'],
+                'created_at' => $user['created_at'],
+            ]);
 
-        return new User($id, $user['uuid'], $user['username']);
+            return $id ?? null;
 
-
+        } catch (Exception $e) {
+            if (str_contains($e->getMessage(), '23000')) {
+                throw new ConflictException("Username already exists.");
+            }
+            throw $e;
+        }
     }
+
 
     /**
      * Find user by username
+     * @param string $username
+     * @return array|null
      */
-    public function findByUsername(string $username): ?User
+
+
+    public function findByUsername(string $username): ?array
     {
         $result = $this->db->select(
             'users',
             [
                 'username' => $username
             ],
-            ['user_id', 'user_uuid', 'username', 'password'],
+            ['id', 'uuid', 'username', 'password'],
             '',
             1
         );
 
-        if (empty($result)) {
-            return null;
-        }
+        return $result[0] ?? null;
 
-        $row = $result[0];
-
-        return new User(
-            $row['user_id'],
-            $row['user_uuid'],
-            $row['username'],
-            $row['password'] ?? null
-        );
     }
 
 
     /**
      * @param string $uuid
-     * @return User|null
+     * @return array|null
      */
-    public function findByUuid(string $uuid): ?User
+    public function findByUUID(string $uuid): ?array
     {
         $result = $this->db->select(
             'users',
             [
-                "user_uuid" => $uuid
+                "uuid" => $uuid
             ],
             '*',
             '',
             1
         );
 
-        if (empty($result)) {
-            return null;
-        }
+        return $result[0] ?? null;
 
-        $row = $result[0];
-
-        return new User(
-            $row['user_id'],
-            $row['user_uuid'],
-            $row['username'],
-            $row['is_active'],
-            $row['role_id']
-        );
     }
 
-    public function updateUser(array $updatedUser): int
+    /**
+     * @param $userID
+     * @param array $updatedUser
+     * @return int
+     */
+    public function updateUser($userID, array $updatedUser): int
     {
 
         return $this->db->update('users',
             $updatedUser,
-            ['user_id' => $updatedUser['user_id']]
+            ['id' => $userID]
         );
     }
 
-    public function deleteUser(string $userUuid): string
+
+    /**
+     * @param string $userID
+     * @return int
+     */
+    public function deleteUser(string $userID): int
     {
 
         return $this->db->delete(
             'users',
-            ["user_uuid" => $userUuid]
+            ["id" => $userID]
         );
 
     }

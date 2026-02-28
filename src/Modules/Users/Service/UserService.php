@@ -2,160 +2,164 @@
 
 namespace App\Modules\Users\Service;
 
-use App\Modules\Users\Controller\Domain\User;
+use App\Modules\Users\Domain\User;
 use App\Modules\Users\Repository\UserRepository;
+use App\Shared\Exception\ConflictException;
+use App\Shared\Exception\ErrorCodes;
 use App\Shared\Exception\NotFoundException;
 use App\Shared\Exception\ValidationException;
-use App\Shared\Exception\ConflictException;
-use App\Shared\Logger\Logger;
-use Random\RandomException;
-use Ramsey\Uuid\Uuid;
+use App\Shared\Helper;
 
 class UserService
 {
     private UserRepository $repository;
+    private Helper $helper;
 
-    public function __construct(UserRepository $repository)
+    public function __construct(
+        UserRepository $repository,
+        Helper         $helper
+    )
     {
         $this->repository = $repository;
+        $this->helper = $helper;
     }
 
     public function listUsers(): array
     {
-
         $users = $this->repository->getAllUsers();
-
         if (!$users) {
-            throw new NotFoundException('Users not found');
+            return [];
         }
 
-        return $users;
+        $usersArray = [];
+        foreach ($users as $user) {
+            $tempUser = $this->mapToDomain($user);
+            $usersArray[] = $tempUser->toPublicArray();
+        }
 
+        return $usersArray;
     }
 
-    public function getUser(string $uuid): array
+    public function getUser(string $uuid, bool $isAuth = false): array|User
     {
-
-        $existingUser = $this->repository->findByUuid($uuid);
-
+        $existingUser = $this->repository->findByUUID($uuid);
         if (!$existingUser) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundException(ErrorCodes::USER_NOT_FOUND);
         }
-
-        return $existingUser->toPublicArray();
+        $user = $this->mapToDomain($existingUser);
+        return $isAuth ? $user : $user->toPublicArray();
     }
 
-    /**
-     * @throws \Exception
-     */
-    public function createUser(array $data): User
+
+    public function createUser(array $data): array
     {
-        if (empty($data['username']) || empty($data['password'])) {
-            throw new ValidationException('Username and password are required');
+        $username = trim($data['username'] ?? '');
+        $password = $data['password'] ?? '';
+
+        if (empty($username) || empty($password)) {
+            throw new ValidationException(ErrorCodes::USERNAME_AND_PASSWORD_REQUIRED);
         }
 
-        if (strlen($data['username']) < 3) {
-            throw new ValidationException('Username too short');
+        if (strlen($username) < 3) {
+            throw new ValidationException(ErrorCodes::USERNAME_TOO_SHORT);
         }
 
-        $uuid = $this->generateUuid();
+        if ($this->repository->findByUsername($username)) {
+            throw new ConflictException(ErrorCodes::USERNAME_ALREADY_EXISTS);
+        }
 
+        if (strlen($password) < 6) {
+            throw new ValidationException(ErrorCodes::PASSWORD_TOO_SHORT);
+        }
 
-        $hashedPassword = password_hash(
-            $data['password'],
-            PASSWORD_ARGON2ID
-        );
+        $uuid = $this->helper->generateUuid();
+        $hashedPassword = password_hash($password, PASSWORD_ARGON2ID);
 
-        $status = 0;
-        $role_id = 0;
         $createdAt = new \DateTimeImmutable();
-
         $newRecord = [
             'uuid' => $uuid,
-            'username' => $data['username'],
+            'username' => $username,
             'password' => $hashedPassword,
-            'is_active' => $status,
-            'role_id' => $role_id,
+            'is_active' => 0,
             'created_at' => $createdAt->format('Y-m-d H:i:s'),
         ];
 
-
-        try {
-            return $this->repository->createUser($newRecord);
-        } catch (\Exception $e) {
-            if (strpos($e->getMessage(), '23000') !== false) {
-                throw new ConflictException("Username already exists.");
-            }
-            throw $e;
+        $response = $this->repository->createUser($newRecord);
+        if (!$response) {
+            throw new ConflictException(ErrorCodes::USER_NOT_CREATED);
         }
-    }
 
+        return $this->mapToDomain($newRecord)->apiArray();
+    }
 
     public function updateUserByUuid(string $uuid, array $data): array
     {
-        $existingUser = $this->repository->findByUuid($uuid);
+
+        if (key_exists('username', $data)) {
+            throw new ValidationException(ErrorCodes::USERNAME_UPDATE_FORBIDDEN);
+        }
+
+        $existingUser = $this->repository->findByUUID($uuid);
 
         if (!$existingUser) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundException(ErrorCodes::USER_NOT_FOUND);
         }
 
-        if (isset($data['username']) && $data['username'] !== $existingUser->getUsername()) {
-            throw new ValidationException('Cannot update username');
-        }
+        $user = $this->mapToDomain($existingUser);
 
-        if (isset($data['password'])) {
-            if (empty($data['password'])) {
-                throw new ValidationException('Password cannot be empty');
+
+        if (!empty($data['password'])) {
+            if (strlen($data['password']) < 6) {
+                throw new ValidationException(ErrorCodes::PASSWORD_TOO_SHORT);
             }
-            $existingUser->setPassword(password_hash($data['password'], PASSWORD_DEFAULT));
+            $user->setPassword(password_hash($data['password'], PASSWORD_ARGON2ID));
         }
 
         if (isset($data['is_active'])) {
-            $existingUser->setIsActive((bool)$data['is_active']);
+            $user->setIsActive((bool)$data['is_active']);
         }
 
-        if (isset($data['role_id'])) {
-            $existingUser->setRoleId((int)$data['role_id']);
-        }
 
-        $userArray = $existingUser->toArray();
+        $userArray = $user->toArray();
         $updateAt = new \DateTimeImmutable();
-
         $userArray['updated_at'] = $updateAt->format('Y-m-d H:i:s');
 
-        $result = $this->repository->updateUser($userArray);
-
+        $result = $this->repository->updateUser($existingUser['id'], $userArray);
         if ($result === 0) {
-            throw new ConflictException('User was not updated successfully');
+            throw new ConflictException(ErrorCodes::USER_NOT_UPDATED);
         }
 
-        return $existingUser->toPublicArray();
-    }
+        $user = $this->mapToDomain(array_merge($existingUser, $userArray));
 
+        return $user->apiArray();
+    }
 
     public function deleteUserByUuid(string $uuid): void
     {
-
-        $existingUser = $this->repository->findByUuid($uuid);
+        $existingUser = $this->repository->findByUUID($uuid);
 
         if (!$existingUser) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundException(ErrorCodes::USER_NOT_FOUND);
         }
 
-        $result = $this->repository->deleteUser($uuid);
+        $result = $this->repository->deleteUser($existingUser['id']);
 
         if ($result === 0) {
-            throw new ConflictException('User was not deleted successfully');
+            throw new ConflictException(ErrorCodes::USER_NOT_DELETED);
         }
-
-
     }
 
-    /**
-     * @throws RandomException
-     */
-    private function generateUuid(): string
+
+    private function mapToDomain(array $row): User
     {
-        return Uuid::uuid4()->toString();
+        return new User(
+            $row["id"] ?? 0,
+            $row['uuid'],
+            $row['username'],
+            $row['password'] ?? '',
+            (int)$row['is_active'],
+            $row['created_at'] ?? '',
+            $row['updated_at'] ?? ''
+        );
     }
 }

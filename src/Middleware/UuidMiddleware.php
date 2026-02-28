@@ -1,12 +1,10 @@
 <?php
-
-
 namespace App\Middleware;
 
+use App\Shared\Exception\ValidationException;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
-use Slim\Psr7\Response as SlimResponse;
 use Slim\Routing\RouteContext;
 use Ramsey\Uuid\Uuid;
 
@@ -20,28 +18,12 @@ final class UuidMiddleware
 
         $uuid = $route?->getArgument('uuid');
 
-        if (!$uuid) {
-            return $this->error('UUID is required', 400);
-        }
-
-        if (!Uuid::isValid($uuid)) {
-            return $this->error('Invalid UUID format', 400);
+        if (!$uuid || !Uuid::isValid($uuid)) {
+            throw new ValidationException('Invalid UUID format');
         }
 
         return $handler->handle(
             $request->withAttribute('uuid', $uuid)
         );
     }
-
-    private function error(string $msg, int $code): Response
-    {
-        $response = new SlimResponse($code);
-        $response->getBody()->write(json_encode([
-            'error' => $msg
-        ]));
-
-        return $response->withStatus(400);
-
-    }
 }
-

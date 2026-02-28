@@ -35,6 +35,10 @@ final class JwtMiddleware implements MiddlewareInterface
 
             $user = $this->userService->getUser($userUuid, true);
 
+            if (!$user->isActive()) {
+                return $this->unauthorized('User is not active');
+            }
+
             $request = $request->withAttribute('current_user', [
                 'id' => $user->getUserId(),
                 'uuid' => $user->getUuid(),

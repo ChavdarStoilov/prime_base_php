@@ -10,30 +10,25 @@ class User
     private string $username;
     private string $password;
     private int $isActive;
+    private int $roleId;
     readonly string $createdAt;
     readonly string $updatedAt;
 
-    public function __construct(
-        int    $userId = 0,
-        string $uuid = '',
-        string $username = '',
-        string $password = '',
-        int    $isActive = 0,
-        string $createdAt = '',
-        string $updatedAt = ''
-    )
+    public function __construct(array $userData)
     {
-        $this->userId = $userId;
-        $this->uuid = $uuid;
-        $this->username = $username;
-        $this->password = $password;
-        $this->isActive = $isActive;
-        $this->createdAt = $createdAt;
-        $this->updatedAt = $updatedAt;
+        $this->userId = $userData['id'] ?? 0;
+        $this->uuid = $userData['uuid'] ?? '';
+        $this->username = $userData['username'] ?? '';
+        $this->password = $userData['password'] ?? '';
+        $this->isActive = $userData['is_active'] ?? 0;
+        $this->createdAt = $userData['created_at'] ?? '';
+        $this->updatedAt = $userData['updated_at'] ?? '';
+        $this->roleId = $userData['role_id'] ?? 0;
     }
 
 
-    public function getUserId(): int {
+    public function getUserId(): int
+    {
         return $this->userId;
     }
 
@@ -69,6 +64,10 @@ class User
 
     }
 
+    public function getRoleId(): int {
+        return $this->roleId;
+    }
+
 
     public function toArray(): array
     {
@@ -76,7 +75,8 @@ class User
             "uuid" => $this->uuid,
             "username" => $this->username,
             "password" => $this->password,
-            "is_active" => $this->isActive
+            "is_active" => $this->isActive,
+            "role_id" => $this->roleId
         ];
     }
 
@@ -87,7 +87,8 @@ class User
             'username' => $this->getUsername(),
             'is_active' => $this->isActive(),
             "created_at" => $this->createdAt,
-            "updated_at" => $this->updatedAt
+            "updated_at" => $this->updatedAt,
+            "role_id" => $this->roleId
 
         ];
     }

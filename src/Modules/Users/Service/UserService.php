@@ -43,9 +43,11 @@ class UserService
     public function getUser(string $uuid, bool $isAuth = false): array|User
     {
         $existingUser = $this->repository->findByUUID($uuid);
+
         if (!$existingUser) {
             throw new NotFoundException(ErrorCodes::USER_NOT_FOUND);
         }
+
         $user = $this->mapToDomain($existingUser);
         return $isAuth ? $user : $user->toPublicArray();
     }
@@ -152,14 +154,14 @@ class UserService
 
     private function mapToDomain(array $row): User
     {
-        return new User(
-            $row["id"] ?? 0,
-            $row['uuid'],
-            $row['username'],
-            $row['password'] ?? '',
-            (int)$row['is_active'],
-            $row['created_at'] ?? '',
-            $row['updated_at'] ?? ''
-        );
+        return new User([
+            "id" => $row["id"] ?? 0,
+            "uuid" => $row['uuid'],
+            "username" => $row['username'],
+            "password" => $row['password'],
+            "is_active" => (int)$row['is_active'],
+            "created_at" => $row['created_at'],
+            "updated_at" => $row['updated_at']
+        ]);
     }
 }

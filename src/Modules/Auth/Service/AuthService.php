@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Modules\Auth\Service;
 
 use App\Modules\Users\Domain\User;
@@ -29,11 +30,13 @@ class AuthService
             return null;
         }
 
-        $user = new User(
-            $response['id'],
-            $response['uuid'],
-            $response['username'],
-            $response['password'] ?? null
+        $user = new User([
+                "id" => $response['id'],
+                "uuid" => $response['uuid'],
+                "username" => $response['username'],
+                "password" => $response['password'] ?? null,
+                "is_active" => (int)$response['is_active'],
+            ]
         );
 
         if (password_verify($password, $user->getPassword())) {

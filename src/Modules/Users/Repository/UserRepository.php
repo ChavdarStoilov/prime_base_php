@@ -71,7 +71,7 @@ class UserRepository
             [
                 'username' => $username
             ],
-            ['id', 'uuid', 'username', 'password'],
+            ['id', 'uuid', 'username', 'password', 'is_active'],
             '',
             1
         );

@@ -42,8 +42,13 @@ readonly class AuthController
         }
 
         $user = $this->authService->authenticate($username, $password);
+
         if (!$user) {
             return $this->helper->json($response, ['error' => 'Invalid credentials'], 401);
+        }
+
+        if (!$user->isActive()) {
+            return $this->helper->json($response, ['error' => 'Your account is not active.'], 422);
         }
 
         $accessToken = $this->jwtService->generate(['sub' => $user->getUuid()]);
@@ -70,6 +75,7 @@ readonly class AuthController
         }
 
         $userUUID = $this->jwtService->validateRefreshToken($refreshToken);
+
         if (!$userUUID) {
             return $this->helper->json($response, ['error' => 'Invalid or expired refresh token'], 401);
         }

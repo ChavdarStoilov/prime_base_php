@@ -12,9 +12,9 @@ use App\Shared\Logger\Logger;
 final class RbacMiddleware implements MiddlewareInterface
 {
     /**
-     * @param UserRepository $userRepository - репозиторито за Users module
-     * @param array $requiredPermissions - permissions, нужни за този route
-     * @param bool $devFallback - ако няма готови modules, разрешава всички permissions (за dev)
+     * @param UserRepository $userRepository
+     * @param array $requiredPermissions
+     * @param bool $devFallback
      */
     public function __construct(
         private UserRepository $userRepository,
@@ -30,26 +30,13 @@ final class RbacMiddleware implements MiddlewareInterface
             throw new UnauthorizedException('User not authenticated');
         }
 
-        $userUuid = $userPayload['sub'];
+        $userId = $userPayload['sub'];
 
-        // Намираме user record
-        $user = $this->userRepository->findByUUID($userUuid);
-        if (!$user) {
-            throw new UnauthorizedException('User not found');
-        }
+        $userPermissions = $this->getUserPermissions($userId);
 
-        if (!(bool)$user['is_active']) {
-            throw new UnauthorizedException('User is inactive');
-        }
-
-        // --- Получаване на permissions ---
-        // TODO: Replace this with real Roles & Permissions modules
-        $userPermissions = $this->getUserPermissions($user['id']);
-
-        // Проверка дали user има всички нужни permissions
         foreach ($this->requiredPermissions as $perm) {
             if (!in_array($perm, $userPermissions, true)) {
-                Logger::log("RBAC: user {$userUuid} missing permission: {$perm}");
+                Logger::log("RBAC: user {$userId} missing permission: {$perm}");
                 throw new UnauthorizedException('Insufficient permissions');
             }
         }
@@ -58,8 +45,6 @@ final class RbacMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Временен placeholder метод за permissions
-     * След това ще се замени с реалните modules
      *
      * @param int $userId
      * @return array
@@ -67,7 +52,6 @@ final class RbacMiddleware implements MiddlewareInterface
     private function getUserPermissions(int $userId): array
     {
         if ($this->devFallback) {
-            // Dev fallback: разрешени всички действия
             return ['*'];
         }
 
@@ -75,6 +59,6 @@ final class RbacMiddleware implements MiddlewareInterface
         // Пример:
         // return $this->rolesService->getPermissionsForUser($userId);
 
-        return []; // по default няма permissions
+        return [];
     }
 }

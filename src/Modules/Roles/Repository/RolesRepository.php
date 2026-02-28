@@ -116,6 +116,19 @@ class RolesRepository
 
     }
 
+    public function getRolePermissions(int $roleId, int $permissionId): array
+    {
+        $result =  $this->db->select(
+            'role_permissions',
+            [
+                "role_id" => $roleId,
+                "permission_id" => $permissionId
+            ]
+        );
+
+        return $result[0] ?? [];
+    }
+
     public function listRolePermissions(): array
     {
 

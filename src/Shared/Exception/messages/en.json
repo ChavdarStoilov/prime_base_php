@@ -16,5 +16,6 @@
   "PERMISSION_ALREADY_EXISTS": "Permission already exists.",
   "PERMISSION_NOT_CREATED": "Permission was not created.",
   "PERMISSION_CANNOT_UPDATE": "System permissions cannot be deleted.",
-  "ROLE_PERMISSION_NOT_ADDED": "Permission not attach to role."
+  "ROLE_PERMISSION_NOT_ADDED": "Permission not attach to role.",
+  "ROLE_PERMISSION_CANNOT_DELETE": "Permissions cannot detach"
 }

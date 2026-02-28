@@ -132,13 +132,22 @@ class RolesService
     public function assignRolePermissions(string $roleUUID, $permissionsUUID): ?bool
     {
 
+
         [$roleId, $permissionsIds] = $this->getRoleAndPermissionsIds($roleUUID, $permissionsUUID);
 
-        foreach ($permissionsIds as $permissionId) {
+        foreach ($permissionsIds as $permission) {
+
+            $permissionId = (int)$permission['id'];
+
+            $isExist = $this->repository->getRolePermissions($roleId, $permissionId);
+
+            if ($isExist) {
+                throw new NotFoundException(ErrorCodes::ROLE_PERMISSION_NOT_ADDED);
+            }
 
             $response = $this->repository->attachRolePermission(
                 $roleId,
-                (int)$permissionId['id']
+                $permissionId
             );
 
             if (!$response) {
@@ -155,8 +164,17 @@ class RolesService
 
         [$roleId, $permissionsIds] = $this->getRoleAndPermissionsIds($roleUUID, $permissionsUUID);
 
-        foreach ($permissionsIds as $permissionId) {
-            $this->repository->detachPermission($roleId, (int)$permissionId['id']);
+        foreach ($permissionsIds as $permission) {
+
+            $permissionId = (int)$permission['id'];
+
+            $isExist = $this->repository->getRolePermissions($roleId, $permissionId);
+
+            if (!$isExist) {
+                throw new NotFoundException(ErrorCodes::ROLE_PERMISSION_CANNOT_DELETE);
+            }
+
+            $this->repository->detachPermission($roleId, $permissionId);
         }
     }
 

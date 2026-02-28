@@ -6,6 +6,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use Slim\Exception\HttpMethodNotAllowedException;
+use Slim\Exception\HttpNotFoundException;
 use Slim\Psr7\Response;
 use App\Shared\Exception\ApplicationException;
 use App\Shared\Exception\ExceptionMessageResolver;
@@ -42,10 +44,38 @@ final class ErrorMiddleware implements MiddlewareInterface
             $response = new Response($e->getHttpStatus());
             $response->getBody()->rewind();
 
+            return $this->jsonResponse($response, $payload);
 
-            $response->getBody()->write(json_encode($payload, JSON_THROW_ON_ERROR));
+        } catch (HttpMethodNotAllowedException $e) {
+            // --- 405 Method Not Allowed ---
+            $allowed = $e->getAllowedMethods();
 
-            return $response->withHeader('Content-Type', 'application/json');
+            $payload = [
+                'success' => false,
+                'error' => [
+                    'code' => 'METHOD_NOT_ALLOWED',
+                    'message' => 'Method not allowed',
+                    'allowed_methods' => $allowed
+                ]
+            ];
+
+            $response = new Response(405);
+            return $this->jsonResponse($response, $payload);
+
+        } catch (HttpNotFoundException $e) {
+            // --- 404 Not Found ---
+            $payload = [
+                'success' => false,
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => 'Route not found'
+                ]
+            ];
+
+            $response = new Response(404);
+
+            return $this->jsonResponse($response, $payload);
+
         } catch (\Throwable $e) {
 
             Logger::log('System Error: ' . $e::class, $e->getMessage());
@@ -60,11 +90,16 @@ final class ErrorMiddleware implements MiddlewareInterface
                 ]
             ];
 
-            $response->getBody()->write(
-                json_encode($payload, JSON_THROW_ON_ERROR)
-            );
-
-            return $response->withHeader('Content-Type', 'application/json');
+            return $this->jsonResponse($response, $payload);
         }
     }
+
+    private function jsonResponse(\Slim\Psr7\Response $response, array $payload,
+    ): \Slim\Psr7\Response
+    {
+        $response->getBody()->rewind();
+        $response->getBody()->write(json_encode($payload, JSON_THROW_ON_ERROR));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
 }

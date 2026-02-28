@@ -2,6 +2,7 @@
 
 namespace App\Modules\Roles\Service;
 
+use App\Modules\Permissions\Repository\PermissionsRepository;
 use App\Modules\Roles\Domain\Role;
 use App\Modules\Roles\Repository\RolesRepository;
 use App\Shared\Exception\ConflictException;
@@ -15,14 +16,17 @@ class RolesService
 {
     private RolesRepository $repository;
 
+    private PermissionsRepository $permissionsRepo;
     private Helper $helper;
 
     public function __construct(
-        RolesRepository $repository,
-        Helper $helper
+        RolesRepository       $repository,
+        PermissionsRepository $permissionsRepo,
+        Helper                $helper
     )
     {
         $this->repository = $repository;
+        $this->permissionsRepo = $permissionsRepo;
         $this->helper = $helper;
     }
 
@@ -123,6 +127,55 @@ class RolesService
         }
 
         $this->repository->delete((int)$row['id']);
+    }
+
+    public function assignRolePermissions(string $roleUUID, $permissionsUUID): ?bool
+    {
+
+        [$roleId, $permissionsIds] = $this->getRoleAndPermissionsIds($roleUUID, $permissionsUUID);
+
+        foreach ($permissionsIds as $permissionId) {
+
+            $response = $this->repository->attachRolePermission(
+                $roleId,
+                (int)$permissionId['id']
+            );
+
+            if (!$response) {
+                throw new NotFoundException(ErrorCodes::ROLE_PERMISSION_NOT_ADDED);
+            }
+
+        }
+
+        return true;
+    }
+
+    public function deAssignRolePermissions(string $roleUUID, array $permissionsUUID): void
+    {
+
+        [$roleId, $permissionsIds] = $this->getRoleAndPermissionsIds($roleUUID, $permissionsUUID);
+
+        foreach ($permissionsIds as $permissionId) {
+            $this->repository->detachPermission($roleId, (int)$permissionId['id']);
+        }
+    }
+
+
+    public function getRoleAndPermissionsIds(string $roleUUID, array $permissionsUUID): ?array
+    {
+
+        $roleId = $this->repository->findByUuid($roleUUID);
+        if (!$roleId) {
+            throw new NotFoundException(ErrorCodes::ROLE_NOT_FOUND);
+        }
+
+        $permissionsId = $this->permissionsRepo->findByUuid($permissionsUUID);
+
+        if (!$permissionsId) {
+            throw new NotFoundException(ErrorCodes::PERMISSION_NOT_FOUND);
+        }
+
+        return [(int)$roleId['id'], $permissionsId];
     }
 
     private function mapToDomain(array $row): Role

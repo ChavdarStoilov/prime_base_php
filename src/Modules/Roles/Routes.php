@@ -20,11 +20,16 @@ class Routes
             $group->get('/{uuid}', [RolesController::class, 'getRole'])
                 ->add(UuidMiddleware::class);
 
+            $group->post('/assign', [RolesController::class, 'attachRolePermission']);
+
+            $group->delete('/detach', [RolesController::class, 'detachRolePermission']);
+
             $group->put('/update/{uuid}', [RolesController::class, 'update'])
                 ->add(UuidMiddleware::class);
 
             $group->delete('/delete/{uuid}', [RolesController::class, 'delete'])
                 ->add(UuidMiddleware::class);
+
 
         })->add(JwtMiddleware::class);
     }

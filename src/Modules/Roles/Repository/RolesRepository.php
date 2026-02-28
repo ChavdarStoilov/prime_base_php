@@ -88,16 +88,50 @@ class RolesRepository
     }
 
     // Pivot
-    public function attachPermission(string $roleId, string $permissionId): void
+    public function attachRolePermission(int $roleId, int $permissionId): ?int
     {
+
+        $id = $this->db->insert(
+            'role_permissions',
+            [
+                'role_id' => $roleId,
+                'permission_id' => $permissionId
+            ]
+        );
+
+        return $id ?? null;
+
     }
 
-    public function detachPermission(string $roleId, string $permissionId): void
+
+    public function detachPermission(int $roleId, int $permissionId): ?int
     {
+        return $this->db->delete(
+            'role_permissions',
+            [
+                "role_id" => $roleId,
+                "permission_id" => $permissionId
+            ]
+        );
+
     }
 
-    public function getRolePermissions(string $roleId): array
+    public function listRolePermissions(): array
     {
+
+        return $this->db->select(
+            'role_permissions rp
+            join roles r on r.id = rp.role_id
+            join permissions p on p.id  = rp.permission_id ',
+            [],
+            [
+                "r.uuid",
+                "r.name",
+                "p.uuid",
+                "p.resource",
+            ]
+
+        );
     }
 
 

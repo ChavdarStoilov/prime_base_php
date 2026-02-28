@@ -76,17 +76,6 @@ return function ($container) {
         );
     });
 
-    $container->set(RolesRepository::class, function ($c) {
-        return new RolesRepository($c->get(Database::class));
-    });
-
-    $container->set(RolesService::class, function ($c) {
-        return new RolesService(
-            $c->get(RolesRepository::class),
-            $c->get(Helper::class)
-        );
-    });
-
     $container->set(PermissionsRepository::class, function ($c) {
         return new PermissionsRepository($c->get(Database::class));
     });
@@ -97,4 +86,18 @@ return function ($container) {
             $c->get(Helper::class)
         );
     });
+
+    $container->set(RolesRepository::class, function ($c) {
+        return new RolesRepository($c->get(Database::class));
+    });
+
+    $container->set(RolesService::class, function ($c) {
+        return new RolesService(
+            $c->get(RolesRepository::class),
+            $c->get(PermissionsRepository::class),
+            $c->get(Helper::class)
+        );
+    });
+
+
 };

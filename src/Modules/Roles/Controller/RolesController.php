@@ -89,4 +89,33 @@ class RolesController
 
         return $this->helper->json($response, ['message' => 'Role deleted successfully']);
     }
+
+
+    public function attachRolePermission(Request $request, Response $response, array $args): Response {
+
+        $data = $request->getParsedBody() ?? [];
+
+        if (empty($data)) {
+            return $this->helper->json($response, ['error' => 'Invalid data'], 422);
+        }
+
+        $this->service->assignRolePermissions($data['role_uuid'], $data['permissions_uuids']);
+
+        return $this->helper->json($response, ["message" => "Role permissions added successfully"], 201);
+    }
+
+    public function detachRolePermission(Request $request, Response $response): Response {
+        $data = $request->getParsedBody() ?? [];
+
+        if (empty($data)) {
+            return $this->helper->json($response, ['error' => 'Invalid data'], 422);
+        }
+
+        $this->service->deAssignRolePermissions($data['role_uuid'], $data['permissions_uuids']);
+
+        return $this->helper->json($response, ["message" => "Role permissions remove successfully"], 201);
+
+    }
+
+
 }

@@ -130,5 +130,17 @@ class RolesController
 
     }
 
+    public function detachRole(Request $request, Response $response, array $args): Response {
+        $data = $request->getParsedBody() ?? [];
+
+        if (empty($data)) {
+            return $this->helper->json($response, ['error' => 'Invalid data'], 422);
+        }
+
+        $this->service->deAssignRoleFromUser($args['uuid'], $data['role_uuids']);
+
+        return $this->helper->json($response, ["message" => "Role was removed successfully"], 201);
+    }
+
 
 }

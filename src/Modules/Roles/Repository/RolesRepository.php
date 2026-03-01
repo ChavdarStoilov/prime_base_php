@@ -154,7 +154,7 @@ class RolesRepository
 
     public function getRolePermissions(int $roleId, int $permissionId): array
     {
-        $result =  $this->db->select(
+        $result = $this->db->select(
             'role_permissions',
             [
                 "role_id" => $roleId,
@@ -165,6 +165,21 @@ class RolesRepository
         return $result[0] ?? [];
     }
 
+
+    public function getUserRoles(int $userId, int $roleId): array
+    {
+
+        $result = $this->db->select(
+            'user_roles',
+            [
+                "user_id" => $userId,
+                "role_id" => $roleId
+            ],
+
+        );
+
+        return $result[0] ?? [];
+    }
 
     public function assignRoleToUser(array $userRole): ?int
     {
@@ -177,21 +192,16 @@ class RolesRepository
         return $id ?? null;
     }
 
-
-    public function getUserRoles(int $userId, int $roleId): array
+    public function detachRoleToUser(array $userRole): ?int
     {
 
-        $result =  $this->db->select(
+        return $this->db->delete(
             'user_roles',
-            [
-                "user_id" => $userId,
-                "role_id" => $roleId
-            ]
-
+            $userRole
         );
 
-        return $result[0] ?? [];
     }
+
     public function listRolePermissions(): array
     {
 

@@ -201,7 +201,7 @@ class RolesService
     }
 
 
-    public function assignRoleToUser(string $userUUID, array $roleUUIDS): ?bool
+    public function assignRoleToUser(string $userUUID, array $roleUUIDS): void
     {
         $user = $this->userRepo->findByUuid($userUUID);
 
@@ -239,7 +239,45 @@ class RolesService
             }
         }
 
-        return true;
+    }
+
+    public function deAssignRoleFromUser(string $userUUID, array $roleUUIDs): void
+    {
+
+        $user = $this->userRepo->findByUuid($userUUID);
+
+        if (!$user) {
+            throw new ValidationException(ErrorCodes::USER_NOT_FOUND);
+        }
+
+//        if ($user['is_active'] === 0) {
+//            throw new ValidationException(ErrorCodes::User)
+//        }
+
+
+        $roleIds = $this->repository->findByUuid($roleUUIDs);
+
+        foreach ($roleIds as $roleId) {
+
+            $roleId = (int)$roleId['id'];
+            $userId = (int)$user['id'];
+
+            $isExist = $this->repository->getUserRoles($userId, $roleId);
+
+            if (!$isExist) {
+                throw new ValidationException(ErrorCodes::ROLE_NOT_ADDED);
+            }
+
+            $result = $this->repository->detachRoleToUser([
+                "user_id" => $userId,
+                "role_id" => $roleId
+            ]);
+
+            if (!$result) {
+                throw new NotFoundException(ErrorCodes::ROLE_NOT_ADDED);
+            }
+        }
+
     }
 
     private function mapToDomain(array $row): Role

@@ -23,21 +23,46 @@ class RolesRepository
         return $this->db->select(
             "roles",
             [],
-            ['uuid', 'name', 'description', 'created_at', 'updated_at', 'created_by', 'updated_by', 'is_active']
+            [
+                'uuid',
+                'name',
+                'description',
+                'created_at',
+                'updated_at',
+                'created_by',
+                'updated_by',
+                'is_active',
+                "is_system"
+            ]
         );
     }
 
-    public function findByUuid($id): ?array
+    public function findByUuid($uuids): ?array
     {
+
+        $isMulti = is_array($uuids);
+
+        $whereClause = $isMulti ? [['uuids', 'IN', $uuids]] : ["uuid" => $uuids];
+
         $result = $this->db->select(
             "roles",
+            $whereClause,
             [
-                'uuid' => $id
-            ],
-            ['id', 'uuid', 'name', 'description', 'created_at', 'updated_at', 'created_by', 'updated_by', 'is_active']
+                'id',
+                'uuid',
+                'name',
+                'description',
+                'created_at',
+                'updated_at',
+                'created_by',
+                'updated_by',
+                'is_active',
+                "is_system"
+            ]
         );
 
-        return $result[0] ?? null;
+        $return = $isMulti ? $result : $result[0];
+        return $return ?? null;
     }
 
     public function findByName($name): ?array
@@ -47,7 +72,18 @@ class RolesRepository
             [
                 'name' => $name
             ],
-            ['id', 'uuid', 'name', 'description', 'created_at', 'updated_at', 'created_by', 'updated_by', 'is_active']
+            [
+                'id',
+                'uuid',
+                'name',
+                'description',
+                'created_at',
+                'updated_at',
+                'created_by',
+                'updated_by',
+                'is_active',
+                "is_system"
+            ]
         );
 
         return $result[0] ?? null;
@@ -129,6 +165,33 @@ class RolesRepository
         return $result[0] ?? [];
     }
 
+
+    public function assignRoleToUser(array $userRole): ?int
+    {
+
+        $id = $this->db->insert(
+            'user_roles',
+            $userRole
+        );
+
+        return $id ?? null;
+    }
+
+
+    public function getUserRoles(int $userId, int $roleId): array
+    {
+
+        $result =  $this->db->select(
+            'user_roles',
+            [
+                "user_id" => $userId,
+                "role_id" => $roleId
+            ]
+
+        );
+
+        return $result[0] ?? [];
+    }
     public function listRolePermissions(): array
     {
 

@@ -5,6 +5,7 @@ namespace App\Modules\Roles\Service;
 use App\Modules\Permissions\Repository\PermissionsRepository;
 use App\Modules\Roles\Domain\Role;
 use App\Modules\Roles\Repository\RolesRepository;
+use App\Modules\Users\Repository\UserRepository;
 use App\Shared\Exception\ConflictException;
 use App\Shared\Exception\ErrorCodes;
 use App\Shared\Exception\NotFoundException;
@@ -17,17 +18,20 @@ class RolesService
     private RolesRepository $repository;
 
     private PermissionsRepository $permissionsRepo;
+    private UserRepository $userRepo;
     private Helper $helper;
 
     public function __construct(
         RolesRepository       $repository,
         PermissionsRepository $permissionsRepo,
+        UserRepository        $userRepo,
         Helper                $helper
     )
     {
         $this->repository = $repository;
         $this->permissionsRepo = $permissionsRepo;
         $this->helper = $helper;
+        $this->userRepo = $userRepo;
     }
 
     /**
@@ -194,6 +198,48 @@ class RolesService
         }
 
         return [(int)$roleId['id'], $permissionsId];
+    }
+
+
+    public function assignRoleToUser(string $userUUID, array $roleUUIDS): ?bool
+    {
+        $user = $this->userRepo->findByUuid($userUUID);
+
+        if (!$user) {
+            throw new ValidationException(ErrorCodes::USER_NOT_FOUND);
+        }
+
+//        if ($user['is_active'] === 0) {
+//            throw new ValidationException(ErrorCodes::User)
+//        }
+
+
+        $roleIds = $this->repository->findByUuid($roleUUIDS);
+
+        foreach ($roleIds as $roleId) {
+
+            $roleId = (int)$roleId['id'];
+            $userId = (int)$user['id'];
+
+            $isExist = $this->repository->getUserRoles($userId, $roleId);
+
+            if ($isExist) {
+                throw new ValidationException(ErrorCodes::ROLE_ALREADY_ADDED);
+            }
+
+            $result = $this->repository->assignRoleToUser(
+                [
+                    "user_id" => $userId,
+                    "role_id" => $roleId
+                ]
+            );
+
+            if (!$result) {
+                throw new NotFoundException(ErrorCodes::ROLE_NOT_ADDED);
+            }
+        }
+
+        return true;
     }
 
     private function mapToDomain(array $row): Role

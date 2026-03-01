@@ -24,6 +24,9 @@ class Routes
 
             $group->delete('/detach', [RolesController::class, 'detachRolePermission']);
 
+            $group->post("/assign_user_role/{uuid}", [RolesController::class, 'assignRole'])
+            ->add(UuidMiddleware::class);
+
             $group->put('/update/{uuid}', [RolesController::class, 'update'])
                 ->add(UuidMiddleware::class);
 

@@ -14,6 +14,7 @@ class Role
     readonly string $createdAt;
     private string $updatedAt;
     private int $isActive;
+    private int $isSystem;
 
     public function __construct(array $data)
     {
@@ -25,6 +26,7 @@ class Role
         $this->createdAt = $data['created_at'] ?? '';
         $this->updatedAt = $data['updated_at'] ?? '';
         $this->isActive = $data['is_active'] ?? 0;
+        $this->isSystem = $data['is_system'] ?? 0;
     }
 
     public function getUuid(): string
@@ -47,6 +49,10 @@ class Role
         return $this->isActive;
     }
 
+    public function getIsSystem(): int {
+        return $this->isSystem;
+    }
+
 
     public function setActive($isActive): void
     {
@@ -65,7 +71,8 @@ class Role
             "updated_by" => $this->updatedBy,
             "created_at" => $this->createdAt,
             "updated_at" => $this->updatedAt,
-            "is_active" => $this->getIsActive()
+            "is_active" => $this->getIsActive(),
+            "is_system" => $this->getIsSystem()
 
         ];
     }

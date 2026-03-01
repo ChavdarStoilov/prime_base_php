@@ -95,6 +95,7 @@ return function ($container) {
         return new RolesService(
             $c->get(RolesRepository::class),
             $c->get(PermissionsRepository::class),
+            $c->get(UserRepository::class),
             $c->get(Helper::class)
         );
     });

@@ -12,6 +12,8 @@
   "ROLE_NOT_FOUND": "Role not found.",
   "ROLE_ALREADY_EXISTS": "Role already exists.",
   "ROLE_NOT_CREATED": "Role was not created.",
+  "ROLE_NOT_ADDED": "Role was not added to user.",
+  "ROLE_ALREADY_ADDED": "The role has already been added to the user.",
   "PERMISSION_NOT_FOUND": "Permission not found.",
   "PERMISSION_ALREADY_EXISTS": "Permission already exists.",
   "PERMISSION_NOT_CREATED": "Permission was not created.",

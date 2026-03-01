@@ -4,7 +4,6 @@
 namespace App\Modules\Permissions\Repository;
 
 use App\Shared\Database\Database;
-use function PHPUnit\Framework\isArray;
 
 
 class PermissionsRepository
@@ -28,7 +27,7 @@ class PermissionsRepository
     public function findByUuid($uuids): ?array
     {
 
-        $isMulti = isArray($uuids);
+        $isMulti = is_array($uuids);
 
         $whereClause =  $isMulti? [['role_id', 'IN', $uuids] ] : ["uuid" => $uuids];
 

@@ -10,7 +10,6 @@ class User
     private string $username;
     private string $password;
     private int $isActive;
-    private int $roleId;
     readonly string $createdAt;
     readonly string $updatedAt;
 
@@ -23,7 +22,6 @@ class User
         $this->isActive = $userData['is_active'] ?? 0;
         $this->createdAt = $userData['created_at'] ?? '';
         $this->updatedAt = $userData['updated_at'] ?? '';
-        $this->roleId = $userData['role_id'] ?? 0;
     }
 
 
@@ -64,19 +62,13 @@ class User
 
     }
 
-    public function getRoleId(): int {
-        return $this->roleId;
-    }
-
-
     public function toArray(): array
     {
         return [
             "uuid" => $this->uuid,
             "username" => $this->username,
             "password" => $this->password,
-            "is_active" => $this->isActive,
-            "role_id" => $this->roleId
+            "is_active" => $this->isActive
         ];
     }
 
@@ -87,8 +79,7 @@ class User
             'username' => $this->getUsername(),
             'is_active' => $this->isActive(),
             "created_at" => $this->createdAt,
-            "updated_at" => $this->updatedAt,
-            "role_id" => $this->roleId
+            "updated_at" => $this->updatedAt
 
         ];
     }

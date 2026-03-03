@@ -3,7 +3,8 @@
 namespace App\Modules\Auth;
 
 use Slim\Interfaces\RouteCollectorProxyInterface;
-use App\Middleware\JwtMiddleware;
+use App\Middleware\AuthenticationMiddleware;
+use App\Middleware\AuthorizationMiddleware;
 use App\Modules\Auth\Controller\AuthController;
 
 
@@ -18,7 +19,8 @@ class Routes
             $group->post('/refresh', [AuthController::class, 'refresh']);
 
             $group->post('/logout', [AuthController::class, 'logout'])
-                ->add(JwtMiddleware::class);
+                ->add(AuthorizationMiddleware::class)
+                ->add(AuthenticationMiddleware::class);
 
         });
     }

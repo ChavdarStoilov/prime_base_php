@@ -151,6 +151,23 @@ class UserService
         }
     }
 
+    public function getPermissionsForUser($userId): array
+    {
+        $result = $this->repository->getPermissionsForUser($userId);
+
+        $permissions = [];
+
+        if (!$result) {
+            return [];
+        }
+
+        foreach ($result as $permission) {
+            $permissions[] = $permission['resource'] . "." . $permission['action'];
+        }
+        return $permissions;
+
+    }
+
 
     private function mapToDomain(array $row): User
     {

@@ -26,9 +26,12 @@ class AuthService
         }
 
         $response = $this->repository->findByUsername($username);
+
         if (!$response) {
             return null;
         }
+
+        $userPermissions = $this->repository->getPermissionsForUser($response['id']);
 
         $user = new User([
                 "id" => $response['id'],
@@ -36,6 +39,7 @@ class AuthService
                 "username" => $response['username'],
                 "password" => $response['password'] ?? null,
                 "is_active" => (int)$response['is_active'],
+                "permissions" => $userPermissions
             ]
         );
 

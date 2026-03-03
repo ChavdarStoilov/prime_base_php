@@ -4,7 +4,7 @@ use App\Shared\Database\Database;
 use App\Shared\Exception\ExceptionMessageResolver;
 use App\Shared\Helper;
 use App\Shared\Jwt\JwtService;
-use App\Middleware\JwtMiddleware;
+use App\Middleware\AuthenticationMiddleware;
 use App\Middleware\ErrorMiddleware;
 use App\Modules\Auth\Repository\AuthRepository;
 use App\Modules\Auth\Service\AuthService;
@@ -64,13 +64,12 @@ return function ($container) {
 
     $container->set(JwtService::class, function ($c) {
         return new JwtService(
-            $c->get(AuthRepository::class),
-            $c->get(UserRepository::class)
+            $c->get(AuthRepository::class)
         );
     });
 
-    $container->set(JwtMiddleware::class, function ($c) {
-        return new JwtMiddleware(
+    $container->set(AuthenticationMiddleware::class, function ($c) {
+        return new AuthenticationMiddleware(
             $c->get(JwtService::class),
             $c->get(UserService::class)
         );

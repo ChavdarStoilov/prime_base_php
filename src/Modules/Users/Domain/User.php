@@ -12,6 +12,7 @@ class User
     private int $isActive;
     readonly string $createdAt;
     readonly string $updatedAt;
+    private array $permissions;
 
     public function __construct(array $userData)
     {
@@ -22,6 +23,7 @@ class User
         $this->isActive = $userData['is_active'] ?? 0;
         $this->createdAt = $userData['created_at'] ?? '';
         $this->updatedAt = $userData['updated_at'] ?? '';
+        $this->permissions = $userData['permissions'] ?? [];
     }
 
 
@@ -62,6 +64,11 @@ class User
 
     }
 
+    public function getPermissions(): array
+    {
+        return $this->permissions;
+    }
+
     public function toArray(): array
     {
         return [
@@ -79,7 +86,8 @@ class User
             'username' => $this->getUsername(),
             'is_active' => $this->isActive(),
             "created_at" => $this->createdAt,
-            "updated_at" => $this->updatedAt
+            "updated_at" => $this->updatedAt,
+            "permissions" => $this->getPermissions()
 
         ];
     }

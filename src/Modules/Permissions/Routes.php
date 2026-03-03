@@ -2,8 +2,9 @@
 
 namespace App\Modules\Permissions;
 
+use App\Middleware\AuthorizationMiddleware;
 use Slim\Interfaces\RouteCollectorProxyInterface;
-use App\Middleware\JwtMiddleware;
+use App\Middleware\AuthenticationMiddleware;
 use App\Modules\Permissions\Controller\PermissionsController;
 use App\Middleware\UuidMiddleware;
 
@@ -13,19 +14,26 @@ class Routes
     {
         $group->group('/permissions', function (RouteCollectorProxyInterface $group) {
 
-            $group->post('/create', [PermissionsController::class, 'create']);
+            $group->post('/create', [PermissionsController::class, 'create'])
+                ->setName("permissions.create");
 
-            $group->get('/', [PermissionsController::class, 'list']);
+            $group->get('', [PermissionsController::class, 'list'])
+                ->setName("permissions.list");
 
             $group->get('/{uuid}', [PermissionsController::class, 'getPermission'])
+                ->setName("permissions.view")
                 ->add(UuidMiddleware::class);
 
             $group->put('/update/{uuid}', [PermissionsController::class, 'update'])
+                ->setName("permissions.update")
                 ->add(UuidMiddleware::class);
 
             $group->delete('/delete/{uuid}', [PermissionsController::class, 'delete'])
+                ->setName("permissions.delete")
                 ->add(UuidMiddleware::class);
 
-        })->add(JwtMiddleware::class);
+        })
+            ->add(AuthorizationMiddleware::class)
+            ->add(AuthenticationMiddleware::class);
     }
 }

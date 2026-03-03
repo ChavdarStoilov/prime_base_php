@@ -27,6 +27,7 @@ class RolesController
      */
     public function list(Request $request, Response $response): Response
     {
+
         $roles = $this->service->getAll();
 
         return $this->helper->json($response, $roles);

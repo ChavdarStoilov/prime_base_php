@@ -129,4 +129,24 @@ class UserRepository
         );
 
     }
+
+
+    public function getPermissionsForUser($userId): ?array
+    {
+
+        $result = $this->db->select(
+            "user_roles ur
+            JOIN role_permissions rp ON rp.role_id = ur.role_id
+            JOIN permissions p ON p.id = rp.permission_id
+            ",
+            [
+                "user_id" => $userId,
+            ],
+            [
+                'p.resource', 'p.action'
+            ]
+        );
+
+        return $result ?? null;
+    }
 }

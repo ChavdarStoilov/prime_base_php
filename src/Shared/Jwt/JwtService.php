@@ -64,7 +64,6 @@ final class JwtService
             $hashed = hash('sha256', $token);
 
             $userUUID = $this->repo->validateRefresh($hashed);
-
             return $userUUID ?: null;
 
         } catch (\Exception $e) {

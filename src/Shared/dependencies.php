@@ -1,5 +1,6 @@
 <?php
 
+use App\Middleware\RateLimitMiddleware;
 use App\Shared\Database\Database;
 use App\Shared\Exception\ExceptionMessageResolver;
 use App\Shared\Helper;
@@ -52,7 +53,16 @@ return function ($container) {
     });
 
     $container->set(AuthService::class, function ($c) {
-        return new AuthService($c->get(UserRepository::class));
+        return new AuthService(
+            $c->get(UserRepository::class),
+            $c->get(AuthRepository::class)
+        );
+    });
+
+    $container->set(RateLimitMiddleware::class, function ($c) {
+        return new RateLimitMiddleware(
+            $c->get(AuthService::class),
+        );
     });
 
     $container->set(UserService::class, function ($c) {

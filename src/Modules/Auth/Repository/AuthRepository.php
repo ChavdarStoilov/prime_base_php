@@ -89,4 +89,39 @@ class AuthRepository
         );
     }
 
+
+    /**
+     * @param string $identifier
+     * @param string $route
+     * @return array|null
+     */
+    public function getRateLimit(string $identifier, string $route): ?array
+    {
+        $result = $this->db->select('rate_limits', [
+            'identifier' => $identifier,
+            'route' => $route
+        ], '*', '', 1);
+
+        return $result[0] ?? null;
+    }
+
+    /**
+     * @param array $data
+     * @return void
+     */
+    public function createRateLimit(array $data): void
+    {
+        $this->db->insert('rate_limits', $data);
+    }
+
+    /**
+     * @param int $id
+     * @param array $data
+     * @return void
+     */
+    public function updateRateLimit(int $id, array $data): void
+    {
+        $this->db->update('rate_limits', $data, ['id' => $id]);
+    }
+
 }

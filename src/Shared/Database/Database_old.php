@@ -4,7 +4,6 @@ namespace App\Shared\Database;
 
 use PDO;
 use PDOException;
-use RuntimeException;
 
 class Database
 {
@@ -13,24 +12,24 @@ class Database
 
     public function __construct(array $config)
     {
+        $driver = $config['driver'] ?? 'mysql';
+        $options = $config['options'] ?? [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ];
+
         try {
             $host = $config['host'] ?? '';
             $user = $config['user'] ?? '';
-            $port = $config['port'] ?? '3306';
             $db = $config['db'] ?? '';
             $password = $config['password'] ?? '';
+            $port = $config['port'] ?? '3306';
 
             $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
-
-            $options = [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false, // Задължително за сигурност
-            ];
-
             $this->pdo = new PDO($dsn, $user, $password, $options);
         } catch (PDOException $e) {
-            throw new RuntimeException('Database connection failed: ' . $e->getMessage());
+            throw new \RuntimeException('Database connection failed: ' . $e->getMessage());
         }
     }
 
@@ -44,7 +43,7 @@ class Database
     public static function get(): self
     {
         if (self::$instance === null) {
-            throw new RuntimeException('Database not initialized.');
+            throw new \RuntimeException('Database not initialized.');
         }
         return self::$instance;
     }
@@ -57,7 +56,7 @@ class Database
 
         $sql = "SELECT $columns FROM $from WHERE $whereSql";
         if ($order) $sql .= " $order";
-        if ($limit !== null) $sql .= " LIMIT " . (int)$limit;
+        if ($limit) $sql .= " LIMIT " . (int)$limit;
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($bindings);
@@ -84,17 +83,23 @@ class Database
     public function update(string $table, array $data, array $where): int
     {
         $bindings = [];
-        $set = [];
+        $setParts = [];
 
+        // Използваме префикс 'u_' за SET параметрите
         foreach ($data as $column => $value) {
-            // Уникален префикс за SET частта, за да няма дублиране с WHERE
-            $param = 'u_' . str_replace('.', '_', $column);
-            $set[] = "`$column` = :$param";
-            $bindings[$param] = $value;
+            $paramName = "u_" . str_replace('.', '_', $column);
+            $setParts[] = "`$column` = :$paramName";
+            $bindings[$paramName] = $value;
         }
 
         $whereSql = $this->buildWhere($where, $bindings);
-        $sql = "UPDATE `$table` SET " . implode(', ', $set) . " WHERE $whereSql";
+
+        $sql = sprintf(
+            "UPDATE `%s` SET %s WHERE %s",
+            $table,
+            implode(', ', $setParts),
+            $whereSql
+        );
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($bindings);
@@ -105,15 +110,13 @@ class Database
     {
         if (empty($where)) return '1=1';
 
-        // Проверка дали масивът е прост: ['uuid' => 'value']
+        // Ако е прост масив ['id' => 5]
         if (!isset($where['AND']) && !isset($where['OR'])) {
             $conditions = [];
             foreach ($where as $column => $value) {
-                // Превръщаме r.token в r_token за име на параметър
-                $safeCol = str_replace('.', '_', $column);
-                $param = 'w_' . $safeCol . '_' . count($bindings);
-                $conditions[] = "$column = :$param";
-                $bindings[$param] = $value;
+                $paramName = "w_" . str_replace('.', '_', $column) . "_" . count($bindings);
+                $conditions[] = "`$column` = :$paramName";
+                $bindings[$paramName] = $value;
             }
             return implode(' AND ', $conditions);
         }
@@ -123,22 +126,20 @@ class Database
             if (!isset($where[$logic])) continue;
 
             $conds = [];
-            foreach ($where[$logic] as $item) {
-                [$column, $operator, $value] = $item;
-                $safeCol = str_replace('.', '_', $column);
-                $param = 'w_' . $safeCol . '_' . count($bindings);
+            foreach ($where[$logic] as [$col, $op, $val]) {
+                $paramName = "w_" . str_replace('.', '_', $col) . "_" . count($bindings);
 
-                if (strtoupper($operator) === 'IN' && is_array($value)) {
+                if (strtoupper($op) === 'IN' && is_array($val)) {
                     $inParts = [];
-                    foreach ($value as $i => $v) {
-                        $pName = $param . '_i' . $i;
+                    foreach ($val as $i => $v) {
+                        $pName = $paramName . "_$i";
                         $inParts[] = ":$pName";
                         $bindings[$pName] = $v;
                     }
-                    $conds[] = "$column IN (" . implode(',', $inParts) . ")";
+                    $conds[] = "`$col` IN (" . implode(',', $inParts) . ")";
                 } else {
-                    $conds[] = "$column $operator :$param";
-                    $bindings[$param] = $value;
+                    $conds[] = "`$col` $op :$paramName";
+                    $bindings[$paramName] = $val;
                 }
             }
             if ($conds) $groups[] = "(" . implode(" $logic ", $conds) . ")";
@@ -147,18 +148,7 @@ class Database
         return implode(' AND ', $groups);
     }
 
-    public function begin(): void
-    {
-        $this->pdo->beginTransaction();
-    }
-
-    public function commit(): void
-    {
-        $this->pdo->commit();
-    }
-
-    public function rollback(): void
-    {
-        $this->pdo->rollBack();
-    }
+    public function begin(): void { $this->pdo->beginTransaction(); }
+    public function commit(): void { $this->pdo->commit(); }
+    public function rollback(): void { $this->pdo->rollBack(); }
 }

@@ -77,4 +77,16 @@ class AuthRepository
         return $this->db->insert('refresh_tokens', $data);
     }
 
+    /**
+     * Invalidate an existing refresh token
+     */
+    public function revokeRefreshToken(string $hashedToken): void
+    {
+        $this->db->update(
+            'refresh_tokens',
+            ['revoked' => 1],
+            ['token' => $hashedToken]
+        );
+    }
+
 }

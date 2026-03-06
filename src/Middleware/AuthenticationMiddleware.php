@@ -57,13 +57,6 @@ final class AuthenticationMiddleware implements MiddlewareInterface
 
     private function extractToken(Request $request): ?string
     {
-        // 1️⃣ Bearer header
-        $header = $request->getHeaderLine('Authorization');
-        if (preg_match('/Bearer\s(\S+)/', $header, $matches)) {
-            return $matches[1];
-        }
-
-        // 2️⃣ httpOnly cookie fallback
         $cookies = $request->getCookieParams();
         return $cookies['access_token'] ?? null;
     }

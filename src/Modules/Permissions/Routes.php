@@ -3,6 +3,7 @@
 namespace App\Modules\Permissions;
 
 use App\Middleware\AuthorizationMiddleware;
+use App\Middleware\CsrfMiddleware;
 use Slim\Interfaces\RouteCollectorProxyInterface;
 use App\Middleware\AuthenticationMiddleware;
 use App\Modules\Permissions\Controller\PermissionsController;
@@ -34,6 +35,7 @@ class Routes
 
         })
             ->add(AuthorizationMiddleware::class)
-            ->add(AuthenticationMiddleware::class);
+            ->add(AuthenticationMiddleware::class)
+            ->add(CsrfMiddleware::class);
     }
 }

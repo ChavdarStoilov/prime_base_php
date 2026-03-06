@@ -3,6 +3,7 @@
 namespace App\Modules\Roles;
 
 use App\Middleware\AuthorizationMiddleware;
+use App\Middleware\CsrfMiddleware;
 use Slim\Interfaces\RouteCollectorProxyInterface;
 use App\Middleware\AuthenticationMiddleware;
 use App\Modules\Roles\Controller\RolesController;
@@ -48,6 +49,7 @@ class Routes
 
         })
             ->add(AuthorizationMiddleware::class)
-            ->add(AuthenticationMiddleware::class);
+            ->add(AuthenticationMiddleware::class)
+            ->add(CsrfMiddleware::class);
     }
 }

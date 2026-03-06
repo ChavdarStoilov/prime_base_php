@@ -50,7 +50,9 @@ final class JwtService
     public function generateRefreshToken(string $userUUID): string
     {
         $token = bin2hex(random_bytes(64));
-        $this->repo->storeRefreshToken($userUUID, $token, $this->refreshTokenExpire);
+        $hashed = hash('sha256', $token);
+
+        $this->repo->storeRefreshToken($userUUID, $hashed, $this->refreshTokenExpire);
         return $token;
     }
 
@@ -58,10 +60,35 @@ final class JwtService
     {
 
         try {
-            return $this->repo->validateRefresh($token);
+
+            $hashed = hash('sha256', $token);
+
+            $userUUID = $this->repo->validateRefresh($hashed);
+
+            return $userUUID ?: null;
+
         } catch (\Exception $e) {
             throw new ValidationException('Invalid refresh token');
 
         }
+    }
+
+    public function rotateRefreshToken(string $oldToken, string $userUUID): string
+    {
+        $hashedOldToken = hash('sha256', $oldToken);
+
+        $this->repo->revokeRefreshToken($hashedOldToken);
+
+        return $this->generateRefreshToken($userUUID);
+    }
+
+    public function revokeToken(string $token): void
+    {
+
+        $hashed = hash('sha256', $token);
+
+        $this->repo->revokeRefreshToken($hashed);
+
+
     }
 }

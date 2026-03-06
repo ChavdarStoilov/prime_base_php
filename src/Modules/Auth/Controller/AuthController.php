@@ -34,33 +34,59 @@ readonly class AuthController
     public function login(Request $request, Response $response): Response
     {
         $data = $request->getParsedBody() ?? [];
+
         $username = trim($data['username'] ?? '');
         $password = $data['password'] ?? '';
 
-        if (empty($username) || empty($password)) {
-            return $this->helper->json($response, ['error' => 'Username and password required'], 422);
+        if ($username === '' || $password === '') {
+            return $this->helper->json($response, [
+                'error' => 'Username and password required'
+            ], 422);
         }
 
         $user = $this->authService->authenticate($username, $password);
 
         if (!$user) {
-            return $this->helper->json($response, ['error' => 'Invalid credentials'], 401);
+            return $this->helper->json($response, [
+                'error' => 'Invalid credentials'
+            ], 401);
         }
 
         if (!$user->isActive()) {
-            return $this->helper->json($response, ['error' => 'Your account is not active.'], 422);
+            return $this->helper->json($response, [
+                'error' => 'Your account is not active.'
+            ], 403);
         }
 
-        $accessToken = $this->jwtService->generate(['sub' => $user->getUuid()]);
-        $refreshToken = $this->jwtService->generateRefreshToken($user->getUuid());
-
-        return $this->helper->json($response, [
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
-            'expires_in' => 3600,
-            "permissions" => $user->getPermissions()
+        $accessToken = $this->jwtService->generate([
+            'sub' => $user->getUuid(),
+            'iat' => time(),
+            'exp' => time() + 900,
+            'jti' => bin2hex(random_bytes(16))
         ]);
 
+        $refreshToken = $this->jwtService->generateRefreshToken($user->getUuid());
+
+        $csrfToken = bin2hex(random_bytes(32));
+
+        $response = $response
+            ->withAddedHeader(
+                'Set-Cookie',
+                "access_token={$accessToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=900"
+            )
+            ->withAddedHeader(
+                'Set-Cookie',
+                "refresh_token={$refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000"
+            )
+            ->withAddedHeader(
+                'Set-Cookie',
+                "csrf_token={$csrfToken}; Secure; SameSite=Strict; Path=/"
+            );
+
+        return $this->helper->json($response, [
+            'expires_in' => 900,
+            'permissions' => $user->getPermissions()
+        ]);
     }
 
     /**
@@ -68,24 +94,74 @@ readonly class AuthController
      */
     public function refresh(Request $request, Response $response): Response
     {
-        $data = $request->getParsedBody() ?? [];
-        $refreshToken = $data['refresh_token'] ?? null;
+        $cookies = $request->getCookieParams();
+        $refreshToken = $cookies['refresh_token'] ?? null;
+        $existingCsrfToken = $cookies['csrf_token'] ?? bin2hex(random_bytes(32));
 
         if (!$refreshToken) {
-            return $this->helper->json($response, ['error' => 'Refresh token missing'], 400);
+            return $this->helper->json($response, ['error' => 'No refresh token provided'], 401);
         }
 
         $userUUID = $this->jwtService->validateRefreshToken($refreshToken);
 
         if (!$userUUID) {
-            return $this->helper->json($response, ['error' => 'Invalid or expired refresh token'], 401);
+            return $this->clearCookies($response)
+                ->withStatus(401)
+                ->getBody()->write(json_encode(['error' => 'Invalid or expired refresh token']));
         }
 
-        $accessToken = $this->jwtService->generate(['sub' => $userUUID]);
+        $accessToken = $this->jwtService->generate([
+            'sub' => $userUUID,
+            'iat' => time(),
+            'exp' => time() + 900, // 15 минути
+            'jti' => bin2hex(random_bytes(16))
+        ]);
+
+        $newRefreshToken = $this->jwtService->rotateRefreshToken($refreshToken, $userUUID);
+
+        // 4. Задаваме новите бисквитки
+        $response = $response
+            ->withAddedHeader(
+                'Set-Cookie',
+                "access_token={$accessToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=900"
+            )
+            ->withAddedHeader(
+                'Set-Cookie',
+                "refresh_token={$newRefreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000"
+            )
+            ->withAddedHeader(
+                'Set-Cookie',
+                "csrf_token={$existingCsrfToken}; Secure; SameSite=Strict; Path=/"
+            );
 
         return $this->helper->json($response, [
-            'access_token' => $accessToken,
-            'expires_in' => 3600
+            'message' => 'Token refreshed successfully',
+            'expires_in' => 900
         ]);
+    }
+
+    private function clearCookies(Response $response): Response
+    {
+        $pastDate = "Thu, 01 Jan 1970 00:00:00 GMT";
+        $settings = "; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0; Expires={$pastDate}";
+
+        return $response
+            ->withHeader('Set-Cookie', "access_token=" . $settings)
+            ->withAddedHeader('Set-Cookie', "refresh_token=" . $settings)
+            ->withAddedHeader('Set-Cookie', "csrf_token=" . $settings);
+    }
+
+
+    public function logout(Request $request, Response $response): Response
+    {
+        $cookies = $request->getCookieParams();
+        $refreshToken = $cookies['refresh_token'] ?? null;
+
+        if ($refreshToken) {
+            $this->jwtService->revokeToken($refreshToken);
+        }
+
+        return $this->clearCookies($response)
+            ->withStatus(200);
     }
 }

@@ -12,7 +12,6 @@ use App\Middleware\CorsMiddleware;
 
 return function (App $app) {
 
-
     $app->add(new CorsMiddleware());
     $app->add(ErrorMiddleware::class);
     $app->add(new JsonMiddleware());

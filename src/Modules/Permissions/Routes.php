@@ -15,21 +15,21 @@ class Routes
     {
         $group->group('/permissions', function (RouteCollectorProxyInterface $group) {
 
-            $group->post('/create', [PermissionsController::class, 'create'])
+            $group->post('/create/', [PermissionsController::class, 'create'])
                 ->setName("permissions.create");
 
-            $group->get('', [PermissionsController::class, 'list'])
+            $group->get('/', [PermissionsController::class, 'list'])
                 ->setName("permissions.list");
 
-            $group->get('/{uuid}', [PermissionsController::class, 'getPermission'])
+            $group->get('/{uuid}/', [PermissionsController::class, 'getPermission'])
                 ->setName("permissions.view")
                 ->add(UuidMiddleware::class);
 
-            $group->put('/update/{uuid}', [PermissionsController::class, 'update'])
+            $group->put('/update/{uuid}/', [PermissionsController::class, 'update'])
                 ->setName("permissions.update")
                 ->add(UuidMiddleware::class);
 
-            $group->delete('/delete/{uuid}', [PermissionsController::class, 'delete'])
+            $group->delete('/delete/{uuid}/', [PermissionsController::class, 'delete'])
                 ->setName("permissions.delete")
                 ->add(UuidMiddleware::class);
 

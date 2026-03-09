@@ -22,9 +22,18 @@ class UserRepository
     public function getAllUsers(): array
     {
         return $this->db->select(
-            "users",
+            "users u
+            LEFT JOIN user_roles ur on u.id = ur.user_id
+            LEFT JOIN roles r on ur.role_id = r.id",
             [],
-            ['uuid', 'username', 'is_active', 'created_at', 'updated_at']
+            [
+                'u.uuid',
+                'u.username',
+                'u.is_active',
+                'u.created_at',
+                'u.updated_at',
+                "IFNULL(r.name, 'No Role') as role"
+            ]
         );
     }
 

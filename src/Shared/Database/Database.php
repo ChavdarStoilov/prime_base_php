@@ -101,6 +101,38 @@ class Database
         return $stmt->rowCount();
     }
 
+    /**
+     * @param string $table
+     * @param array $where
+     * @return int
+     */
+    public function delete(string $table, array $where): int
+    {
+        if (empty($where)) {
+            throw new \InvalidArgumentException(
+                "Delete operation must have conditions to prevent accidental full table truncation."
+            );
+        }
+
+        $bindings = [];
+        $whereSql = $this->buildWhere($where, $bindings);
+
+        if (empty($whereSql)) {
+            throw new \RuntimeException("Failed to build a valid WHERE clause for the delete operation.");
+        }
+
+        $sql = sprintf('DELETE FROM %s WHERE %s', $table, $whereSql);
+
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($bindings);
+
+            return $stmt->rowCount();
+        } catch (\PDOException $e) {
+            throw $e;
+        }
+    }
+
     private function buildWhere(array $where, array &$bindings): string
     {
         if (empty($where)) return '1=1';

@@ -12,10 +12,9 @@ use App\Middleware\CorsMiddleware;
 
 return function (App $app) {
 
-    $app->add(new CorsMiddleware());
-    $app->add(ErrorMiddleware::class);
     $app->add(new JsonMiddleware());
-
+    $app->add(ErrorMiddleware::class);
+    $app->add(new CorsMiddleware());
 
     $app->group('/api/v1', function (\Slim\Routing\RouteCollectorProxy $group) {
 

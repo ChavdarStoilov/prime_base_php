@@ -2,6 +2,8 @@
 
 namespace App\Modules\Users\Domain;
 
+use App\Shared\Logger\Logger;
+
 class User
 {
 
@@ -13,9 +15,11 @@ class User
     readonly string $createdAt;
     readonly string $updatedAt;
     private array $permissions;
+    private string $role;
 
     public function __construct(array $userData)
     {
+        Logger::log("data", $userData);
         $this->userId = $userData['id'] ?? 0;
         $this->uuid = $userData['uuid'] ?? '';
         $this->username = $userData['username'] ?? '';
@@ -24,6 +28,7 @@ class User
         $this->createdAt = $userData['created_at'] ?? '';
         $this->updatedAt = $userData['updated_at'] ?? '';
         $this->permissions = $userData['permissions'] ?? [];
+        $this->role = $userData['role'] ?? '';
     }
 
 
@@ -69,6 +74,10 @@ class User
         return $this->permissions;
     }
 
+    public function getRole(): string {
+        return $this->role;
+    }
+
     public function toArray(): array
     {
         return [
@@ -87,7 +96,8 @@ class User
             'is_active' => $this->isActive(),
             "created_at" => $this->createdAt,
             "updated_at" => $this->updatedAt,
-            "permissions" => $this->getPermissions()
+            "permissions" => $this->getPermissions(),
+            "role" => $this->getRole()
 
         ];
     }

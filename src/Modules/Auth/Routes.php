@@ -14,13 +14,13 @@ class Routes
     {
         $group->group('/auth', function (RouteCollectorProxyInterface $group) {
 
-            $group->post('/login', [AuthController::class, 'login'])
+            $group->post('/login/', [AuthController::class, 'login'])
                 ->add(RateLimitMiddleware::class);
 
-            $group->post('/refresh', [AuthController::class, 'refresh'])
+            $group->post('/refresh/', [AuthController::class, 'refresh'])
                 ->add(CsrfMiddleware::class);
 
-            $group->post('/logout', [AuthController::class, 'logout'])
+            $group->post('/logout/', [AuthController::class, 'logout'])
                 ->add(CsrfMiddleware::class);
 
         });

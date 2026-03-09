@@ -15,21 +15,21 @@ class Routes
     {
         $group->group('/users', function (RouteCollectorProxyInterface $group) {
 
-            $group->post('/create', [UsersController::class, 'create'])
+            $group->post('/create/', [UsersController::class, 'create'])
                 ->setName("users.create");
 
-            $group->get('', [UsersController::class, 'list'])
-                ->setName("users.list");
+            $group->get('/', [UsersController::class, 'list'])
+                ->setName("users.view");
 
-            $group->get('/{uuid}', [UsersController::class, 'getUser'])
+            $group->get('/{uuid}/', [UsersController::class, 'getUser'])
                 ->setName("users.view")
                 ->add(UuidMiddleware::class);
 
-            $group->put('/update/{uuid}', [UsersController::class, 'update'])
+            $group->put('/update/{uuid}/', [UsersController::class, 'update'])
                 ->setName("users.update")
                 ->add(UuidMiddleware::class);
 
-            $group->delete('/delete/{uuid}', [UsersController::class, 'delete'])
+            $group->delete('/delete/{uuid}/', [UsersController::class, 'delete'])
                 ->setName("users.delete")
                 ->add(UuidMiddleware::class);
 

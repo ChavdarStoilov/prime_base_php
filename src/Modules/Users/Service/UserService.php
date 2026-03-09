@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Modules\Users\Service;
-
+use App\Shared\Logger\Logger;
 use App\Modules\Users\Domain\User;
 use App\Modules\Users\Repository\UserRepository;
 use App\Shared\Exception\ConflictException;
@@ -9,6 +9,7 @@ use App\Shared\Exception\ErrorCodes;
 use App\Shared\Exception\NotFoundException;
 use App\Shared\Exception\ValidationException;
 use App\Shared\Helper;
+use Psr\Log\LogLevel;
 
 class UserService
 {
@@ -178,7 +179,8 @@ class UserService
             "password" => $row['password'],
             "is_active" => (int)$row['is_active'],
             "created_at" => $row['created_at'],
-            "updated_at" => $row['updated_at']
+            "updated_at" => $row['updated_at'],
+            'role' => $row['role'],
         ]);
     }
 }

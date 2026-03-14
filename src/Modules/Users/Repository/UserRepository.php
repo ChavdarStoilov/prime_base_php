@@ -32,7 +32,8 @@ class UserRepository
                 'u.is_active',
                 'u.created_at',
                 'u.updated_at',
-                "IFNULL(r.name, 'No Role') as role"
+                "r.name as role",
+                "r.uuid as role_uuid"
             ]
         );
     }
@@ -80,7 +81,7 @@ class UserRepository
             [
                 'username' => $username
             ],
-            ['id', 'uuid', 'username', 'password', 'is_active'],
+            ['id', 'uuid', 'username', 'password', 'is_active', 'is_superuser'],
             '',
             1
         );
@@ -97,11 +98,24 @@ class UserRepository
     public function findByUUID(string $uuid): ?array
     {
         $result = $this->db->select(
-            'users',
+            'users u
+            LEFT JOIN user_roles ur on u.id = ur.user_id
+            LEFT JOIN roles r on ur.role_id = r.id
+            ',
             [
-                "uuid" => $uuid
+                "u.uuid" => $uuid
             ],
-            '*',
+            [
+                'u.id',
+                'u.uuid',
+                'u.username',
+                'u.is_active',
+                'u.created_at',
+                'u.updated_at',
+                'u.is_superuser',
+                "r.name as role",
+                "r.uuid as role_uuid"
+            ],
             '',
             1
         );

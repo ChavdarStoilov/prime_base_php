@@ -39,6 +39,7 @@ final class AuthenticationMiddleware implements MiddlewareInterface
 
             $request = $request->withAttribute('current_user', [
                 'id'   => $user->getUserId(),
+                'is_superuser' => $user->getIsSuperUser(),
                 'uuid' => $user->getUuid(),
             ]);
 

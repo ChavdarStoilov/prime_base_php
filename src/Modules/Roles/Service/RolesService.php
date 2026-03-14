@@ -11,6 +11,7 @@ use App\Shared\Exception\ErrorCodes;
 use App\Shared\Exception\NotFoundException;
 use App\Shared\Exception\ValidationException;
 use App\Shared\Helper;
+use App\Shared\Logger\Logger;
 use DateTimeImmutable;
 
 class RolesService
@@ -201,7 +202,7 @@ class RolesService
     }
 
 
-    public function assignRoleToUser(string $userUUID, array $roleUUIDS): void
+    public function assignRoleToUser(string $userUUID, array $roleUUIDS): array
     {
         $user = $this->userRepo->findByUuid($userUUID);
 
@@ -213,31 +214,75 @@ class RolesService
 //            throw new ValidationException(ErrorCodes::User)
 //        }
 
+        Logger::log("roleUUIDS", $roleUUIDS);
 
-        $roleIds = $this->repository->findByUuid($roleUUIDS);
+        $roleId = $this->repository->findByUuid($roleUUIDS)[0];
+        Logger::log("role", $roleId);
+        Logger::log("user id", $user);
 
-        foreach ($roleIds as $roleId) {
+        $userId = (int)$user['id'];
+        $roleId = $roleId['id'];
 
-            $roleId = (int)$roleId['id'];
-            $userId = (int)$user['id'];
+        $isExist = $this->repository->getUserRoles($userId, $roleId);
 
-            $isExist = $this->repository->getUserRoles($userId, $roleId);
-
-            if ($isExist) {
-                throw new ValidationException(ErrorCodes::ROLE_ALREADY_ADDED);
-            }
-
-            $result = $this->repository->assignRoleToUser(
-                [
-                    "user_id" => $userId,
-                    "role_id" => $roleId
-                ]
-            );
-
-            if (!$result) {
-                throw new NotFoundException(ErrorCodes::ROLE_NOT_ADDED);
-            }
+        if ($isExist) {
+            throw new ValidationException(ErrorCodes::ROLE_ALREADY_ADDED);
         }
+
+        Logger::log("for send", [
+            "user_id" => $userId,
+            "role_id" => $roleId
+        ]);
+
+        $result = $this->repository->assignRoleToUser(
+            [
+                "user_id" => $userId,
+                "role_id" => $roleId
+            ]
+        );
+
+        if (!$result) {
+            throw new NotFoundException(ErrorCodes::ROLE_NOT_ADDED);
+        }
+
+        Logger::log("result", $result);
+
+        return [
+            "role_name" => $roleId['name'],
+            "role_uuid" => $roleId['uuid']
+        ];
+
+//        foreach ($roleIds as $roleId) {
+//
+//            $roleId = (int)$roleId['id'];
+//            $userId = (int)$user['id'];
+//
+//            if (!is_array($roleUUIDS)) {
+//                $roleUUIDS = [
+//                    "role_name" => (string)$roleId['name'],
+//                    "role_uuid" => (string)$roleId['uuid'],
+//                ];
+//            }
+//
+//            $isExist = $this->repository->getUserRoles($userId, $roleId);
+//
+//            if ($isExist) {
+//                throw new ValidationException(ErrorCodes::ROLE_ALREADY_ADDED);
+//            }
+//
+//            $result = $this->repository->assignRoleToUser(
+//                [
+//                    "user_id" => $userId,
+//                    "role_id" => $roleId
+//                ]
+//            );
+//
+//            if (!$result) {
+//                throw new NotFoundException(ErrorCodes::ROLE_NOT_ADDED);
+//            }
+//        }
+
+//        return $roleResponse;
 
     }
 

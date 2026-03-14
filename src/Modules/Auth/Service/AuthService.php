@@ -45,7 +45,8 @@ class AuthService
                 "username" => $response['username'],
                 "password" => $response['password'] ?? null,
                 "is_active" => (int)$response['is_active'],
-                "permissions" => $userPermissions
+                "permissions" => $userPermissions,
+                "is_superuser" => (int)$response['is_superuser'],
             ]
         );
 

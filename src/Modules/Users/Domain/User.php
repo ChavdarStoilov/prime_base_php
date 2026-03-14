@@ -16,10 +16,11 @@ class User
     readonly string $updatedAt;
     private array $permissions;
     private string $role;
+    private string $roleUuid;
+    private int $isSuperUser;
 
     public function __construct(array $userData)
     {
-        Logger::log("data", $userData);
         $this->userId = $userData['id'] ?? 0;
         $this->uuid = $userData['uuid'] ?? '';
         $this->username = $userData['username'] ?? '';
@@ -28,7 +29,9 @@ class User
         $this->createdAt = $userData['created_at'] ?? '';
         $this->updatedAt = $userData['updated_at'] ?? '';
         $this->permissions = $userData['permissions'] ?? [];
-        $this->role = $userData['role'] ?? '';
+        $this->role = $userData['role'] ?? 'No role';
+        $this->roleUuid = $userData['role_uuid'] ?? 'No role uuid';
+        $this->isSuperUser = $userData['is_superuser'] ?? 0;
     }
 
 
@@ -74,8 +77,24 @@ class User
         return $this->permissions;
     }
 
-    public function getRole(): string {
-        return $this->role;
+    public function getRole(): array {
+        return [
+            "uuid" => $this->roleUuid,
+            "name" => $this->role
+            ];
+    }
+
+    public function getRoleUuid(): string {
+        return $this->roleUuid;
+    }
+    public function setRole(array $role): void {
+        $this->roleUuid = $role['uuid'];
+        $this->role = $role['name'];
+    }
+
+
+    public function getIsSuperUser(): int {
+        return $this->isSuperUser;
     }
 
     public function toArray(): array

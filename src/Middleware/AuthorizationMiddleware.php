@@ -20,6 +20,7 @@ final class AuthorizationMiddleware implements MiddlewareInterface
     {
         $currentUser = $request->getAttribute('current_user');
 
+        Logger::log("current_user", $currentUser);
         if (!$currentUser) {
             return $this->unauthorized();
         }
@@ -40,7 +41,12 @@ final class AuthorizationMiddleware implements MiddlewareInterface
         $userPermissions = $this->userService
             ->getPermissionsForUser($currentUser['id']);
 
-        if (!in_array($permission, $userPermissions, true)) {
+        Logger::log("user permission", $userPermissions);
+
+        if (
+            !in_array($permission, $userPermissions, true) &&
+            !$currentUser['is_superuser']
+        ) {
             Logger::log("RBAC deny user {$currentUser['uuid']} -> {$permission}");
             return $this->forbidden();
         }

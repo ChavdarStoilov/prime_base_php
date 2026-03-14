@@ -65,26 +65,6 @@ return function ($container) {
         );
     });
 
-    $container->set(UserService::class, function ($c) {
-        return new UserService(
-            $c->get(UserRepository::class),
-            $c->get(Helper::class)
-        );
-    });
-
-    $container->set(JwtService::class, function ($c) {
-        return new JwtService(
-            $c->get(AuthRepository::class)
-        );
-    });
-
-    $container->set(AuthenticationMiddleware::class, function ($c) {
-        return new AuthenticationMiddleware(
-            $c->get(JwtService::class),
-            $c->get(UserService::class)
-        );
-    });
-
     $container->set(PermissionsRepository::class, function ($c) {
         return new PermissionsRepository($c->get(Database::class));
     });
@@ -106,6 +86,26 @@ return function ($container) {
             $c->get(PermissionsRepository::class),
             $c->get(UserRepository::class),
             $c->get(Helper::class)
+        );
+    });
+    $container->set(UserService::class, function ($c) {
+        return new UserService(
+            $c->get(UserRepository::class),
+            $c->get(RolesService::class),
+            $c->get(Helper::class)
+        );
+    });
+
+    $container->set(JwtService::class, function ($c) {
+        return new JwtService(
+            $c->get(AuthRepository::class)
+        );
+    });
+
+    $container->set(AuthenticationMiddleware::class, function ($c) {
+        return new AuthenticationMiddleware(
+            $c->get(JwtService::class),
+            $c->get(UserService::class)
         );
     });
 

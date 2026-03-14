@@ -17,11 +17,11 @@ class UsersController
 
     public function __construct(
         UserService $userService,
-        Helper $helper
+        Helper      $helper
     )
     {
         $this->userService = $userService;
-        $this->helper  = $helper;
+        $this->helper = $helper;
 
     }
 
@@ -30,6 +30,9 @@ class UsersController
      */
     public function list(Request $request, Response $response): Response
     {
+
+        $currentUser = $request->getAttribute('current_user');
+
         $users = $this->userService->listUsers();
         return $this->helper->json($response, $users);
     }
@@ -62,7 +65,7 @@ class UsersController
 
         $user = $this->userService->createUser($data);
 
-        return $this->helper->json($response, $user , 201);
+        return $this->helper->json($response, $user, 201);
 
     }
 
@@ -81,7 +84,7 @@ class UsersController
 
         $updatedUser = $this->userService->updateUserByUuid($id, $data);
 
-        return $this->helper->json($response, $updatedUser);
+        return $this->helper->json($response, ["update_user" => $updatedUser, 'message' => "User updated successfully"]);
 
     }
 
@@ -92,6 +95,13 @@ class UsersController
     {
 
         $id = $args['uuid'];
+
+        $currentUser = $request->getAttribute('current_user');
+
+        if ($currentUser['uuid'] === $id) {
+            return $this->helper->json($response, ['message' => 'User cannot be delete'], 422);
+
+        }
         $this->userService->deleteUserByUuid($id);
 
         return $this->helper->json($response, ['message' => 'User deleted successfully']);

@@ -15,10 +15,10 @@ class Routes
     {
         $group->group('/roles', function (RouteCollectorProxyInterface $group) {
 
-            $group->post('/creat/e', [RolesController::class, 'create']);
+            $group->post('/create/', [RolesController::class, 'create']);
 
             $group->get('/', [RolesController::class, 'list'])
-                ->setName("roles.list");
+                ->setName("roles.view");
 
             $group->get('/{uuid}/', [RolesController::class, 'getRole'])
                 ->setName("roles.view")

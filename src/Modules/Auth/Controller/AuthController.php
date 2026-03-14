@@ -85,7 +85,8 @@ readonly class AuthController
 
         return $this->helper->json($response, [
             'expires_in' => 900,
-            'permissions' => $user->getPermissions()
+            'permissions' => $user->getPermissions(),
+            'is_superuser' => $user->getIsSuperuser(),
         ]);
     }
 

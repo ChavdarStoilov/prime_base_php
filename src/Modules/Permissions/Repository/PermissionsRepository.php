@@ -18,9 +18,21 @@ class PermissionsRepository
     public function findAll(): array
     {
         return $this->db->select(
-            "permissions",
+            "permissions p
+            LEFT JOIN users u on p.created_by = u.id
+            LEFT JOIN users u2 on p.updated_by = u2.id
+            ",
             [],
-            ['uuid', 'resource', 'action', 'description', 'created_at', 'is_system']
+            [
+                'p.uuid',
+                'p.resource',
+                'p.action',
+                'p.description',
+                'p.created_at',
+                'p.is_system',
+                'u.username as created_by',
+                'u2.username as updated_by',
+            ]
         );
     }
 

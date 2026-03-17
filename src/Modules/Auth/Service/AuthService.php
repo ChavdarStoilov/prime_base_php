@@ -6,6 +6,7 @@ use App\Modules\Auth\Repository\AuthRepository;
 use App\Modules\Users\Domain\User;
 use App\Modules\Users\Repository\UserRepository;
 use App\Shared\Exception\ValidationException;
+use App\Shared\Logger\Logger;
 
 class AuthService
 {

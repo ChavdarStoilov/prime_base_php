@@ -9,12 +9,13 @@ class Role
     private string $uuid;
     private string $name;
     private string $description;
-    readonly int $createdBy;
-    private int $updatedBy;
+    readonly string $createdBy;
+    private string $updatedBy;
     readonly string $createdAt;
     private string $updatedAt;
     private int $isActive;
     private int $isSystem;
+    private array $permissions;
 
     public function __construct(array $data)
     {
@@ -27,6 +28,7 @@ class Role
         $this->updatedAt = $data['updated_at'] ?? '';
         $this->isActive = $data['is_active'] ?? 0;
         $this->isSystem = $data['is_system'] ?? 0;
+        $this->permissions = $data['permissions'] ?? [];
     }
 
     public function getUuid(): string
@@ -61,6 +63,10 @@ class Role
     }
 
 
+    public function getPermissions(): array{
+      return $this->permissions;
+    }
+
     public function toPublicArray(): array
     {
         return [
@@ -72,7 +78,8 @@ class Role
             "created_at" => $this->createdAt,
             "updated_at" => $this->updatedAt,
             "is_active" => $this->getIsActive(),
-            "is_system" => $this->getIsSystem()
+            "is_system" => $this->getIsSystem(),
+            "permissions" => $this->getPermissions(),
 
         ];
     }

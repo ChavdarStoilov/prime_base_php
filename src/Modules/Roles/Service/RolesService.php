@@ -12,6 +12,7 @@ use App\Shared\Exception\NotFoundException;
 use App\Shared\Exception\ValidationException;
 use App\Shared\Helper;
 use App\Shared\Logger\Logger;
+use Couchbase\LookupCountSpec;
 use DateTimeImmutable;
 
 class RolesService
@@ -47,9 +48,39 @@ class RolesService
         }
 
 
+        $rolesTemp = [];
         $rolesArray = [];
 
+
         foreach ($rows as $row) {
+            $uuid = $row['uuid'];
+
+            if (!isset($rolesTemp[$uuid])) {
+                $rolesTemp[$uuid] = [
+                    'uuid' => $row['uuid'],
+                    'name' => $row['name'],
+                    'description' => $row['description'],
+                    'created_at' => $row['created_at'],
+                    'updated_at' => $row['updated_at'],
+                    'created_by' => $row['created_by'],
+                    'updated_by' => $row['updated_by'],
+                    'is_active' => $row['is_active'],
+                    'is_system' => $row['is_system'],
+                    'permissions' => []
+                ];
+            }
+
+            if ($row['permission_uuid']) {
+                $rolesTemp[$uuid]['permissions'][] = [
+                    'uuid' => $row['permission_uuid'],
+                    'resource' => $row['permission_resource'],
+                    'action' => $row['permission_action'],
+                    'description' => $row['permission_description'],
+                ];
+            }
+        }
+
+        foreach ($rolesTemp as $row) {
             $domainRole = $this->mapToDomain($row)->toPublicArray();
             $rolesArray[] = $domainRole;
         }

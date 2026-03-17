@@ -161,12 +161,13 @@ class UserRepository
             "user_roles ur
             JOIN role_permissions rp ON rp.role_id = ur.role_id
             JOIN permissions p ON p.id = rp.permission_id
+            JOIN resources r ON r.id = p.resource_id
             ",
             [
                 "user_id" => $userId,
             ],
             [
-                'p.resource', 'p.action'
+                'r.name as resources', 'p.action'
             ]
         );
 

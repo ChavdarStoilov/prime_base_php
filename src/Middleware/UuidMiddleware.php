@@ -1,6 +1,8 @@
 <?php
+
 namespace App\Middleware;
 
+use App\Shared\Exception\ErrorCodes;
 use App\Shared\Exception\ValidationException;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -19,7 +21,7 @@ final class UuidMiddleware
         $uuid = $route?->getArgument('uuid');
 
         if (!$uuid || !Uuid::isValid($uuid)) {
-            throw new ValidationException('Invalid UUID format');
+            throw new ValidationException(ErrorCodes::GENERAL_INVALID_UUID);
         }
 
         return $handler->handle(

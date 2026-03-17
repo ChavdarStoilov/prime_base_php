@@ -21,18 +21,28 @@ class RolesRepository
     public function list(): array
     {
         return $this->db->select(
-            "roles",
+            "roles r
+            LEFT JOIN role_permissions rp ON rp.role_id = r.id
+            LEFT JOIN permissions p ON p.id = rp.permission_id
+            LEFT JOIN users u ON u.id = r.created_by
+            LEFT JOIN users u2 ON u2.id = r.updated_by
+            ",
             [],
             [
-                'uuid',
-                'name',
-                'description',
-                'created_at',
-                'updated_at',
-                'created_by',
-                'updated_by',
-                'is_active',
-                "is_system"
+                'r.uuid',
+                'r.name',
+                'r.description',
+                'r.created_at',
+                'r.updated_at',
+                'r.is_active',
+                "r.is_system",
+                "p.uuid as permission_uuid",
+                "p.resource as permission_resource",
+                "p.action as permission_action",
+                "p.description as permission_description",
+                "u.username as created_by",
+                "u2.username as updated_by",
+
             ]
         );
     }

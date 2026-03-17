@@ -5,6 +5,8 @@ namespace App\Shared\Exception;
 
 final class ErrorCodes
 {
+
+    public const GENERAL_INVALID_UUID = "INVALID_UUID_FORMAT";
     // Users
     public const USER_NOT_FOUND = 'USER_NOT_FOUND';
     public const USERNAME_REQUIRED = 'USERNAME_REQUIRED';

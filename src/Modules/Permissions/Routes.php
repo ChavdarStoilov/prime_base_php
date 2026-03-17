@@ -21,6 +21,9 @@ class Routes
             $group->get('/', [PermissionsController::class, 'list'])
                 ->setName("permissions.list");
 
+            $group->get('/resources/', [PermissionsController::class, 'getResource'])
+                ->setName("permissions.resources");
+
             $group->get('/{uuid}/', [PermissionsController::class, 'getPermission'])
                 ->setName("permissions.view")
                 ->add(UuidMiddleware::class);
@@ -32,6 +35,8 @@ class Routes
             $group->delete('/delete/{uuid}/', [PermissionsController::class, 'delete'])
                 ->setName("permissions.delete")
                 ->add(UuidMiddleware::class);
+
+
 
         })
             ->add(AuthorizationMiddleware::class)

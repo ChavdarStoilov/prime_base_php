@@ -96,5 +96,11 @@ class PermissionsController
 
     }
 
+    public function getResource(Request $request, Response $response,): Response
+    {
+        $permissions = $this->service->getResources();
+
+        return $this->helper->json($response, $permissions);
+    }
 
 }

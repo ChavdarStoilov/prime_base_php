@@ -9,7 +9,9 @@ use App\Shared\Exception\ErrorCodes;
 use App\Shared\Exception\NotFoundException;
 use App\Shared\Exception\ValidationException;
 use App\Shared\Helper;
+use App\Shared\Logger\Logger;
 use DateTimeImmutable;
+use Ramsey\Uuid\Uuid;
 
 class PermissionsService
 {
@@ -63,12 +65,28 @@ class PermissionsService
             throw new ConflictException(ErrorCodes::PERMISSION_ALREADY_EXISTS);
         }
 
+
+        if (!Uuid::isValid($data['resource'])) {
+            throw new ValidationException(ErrorCodes::GENERAL_INVALID_UUID);
+
+        }
+
+        $resourceId = $this->repository->getResourceIdByUUID($data['resource']);
+
+        if (!$resourceId) {
+            throw new ValidationException(ErrorCodes::GENERAL_INVALID_UUID);
+
+        }
+
         $uuid = $this->helper->generateUuid();
         $createdAt = new \DateTimeImmutable();
 
         $data['uuid'] = $uuid;
         $data['created_at'] = $createdAt->format('Y-m-d H:i:s');
         $data['created_by'] = $creatorUserId;
+        $data['resource_id'] = $resourceId['id'];
+
+        Logger::log('permission for create', $data);
 
         $response = $this->repository->create($data);
 
@@ -116,6 +134,18 @@ class PermissionsService
         if ($result === 0) {
             throw new ConflictException(ErrorCodes::USER_NOT_DELETED);
         }
+    }
+
+
+    public function getResources(): array
+    {
+        $rows = $this->repository->getResources();
+
+        if (!$rows) {
+            return [];
+        }
+
+        return $rows;
     }
 
     private function mapToDomain(array $row): Permission

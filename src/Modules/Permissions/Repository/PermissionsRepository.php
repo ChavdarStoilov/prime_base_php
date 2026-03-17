@@ -21,11 +21,12 @@ class PermissionsRepository
             "permissions p
             LEFT JOIN users u on p.created_by = u.id
             LEFT JOIN users u2 on p.updated_by = u2.id
+            LEFT JOIN resources r on r.id = p.resource_id
             ",
             [],
             [
                 'p.uuid',
-                'p.resource',
+                'r.name as resource',
                 'p.action',
                 'p.description',
                 'p.created_at',
@@ -41,12 +42,26 @@ class PermissionsRepository
 
         $isMulti = is_array($uuids);
 
-        $whereClause =  $isMulti? [['role_id', 'IN', $uuids] ] : ["uuid" => $uuids];
+        $whereClause = $isMulti ? [['role_id', 'IN', $uuids]] : ["uuid" => $uuids];
 
         $result = $this->db->select(
-            "permissions",
+            "permissions p
+            LEFT JOIN users u on p.created_by = u.id
+            LEFT JOIN users u2 on p.updated_by = u2.id
+            LEFT JOIN resources r on r.id = p.resource_id
+            ",
             $whereClause,
-            ['id', 'uuid', 'resource', 'action', 'description', 'created_at', 'is_system']
+            [
+                'p.id',
+                'p.uuid',
+                'r.name as resource',
+                'p.action',
+                'p.description',
+                'p.created_at',
+                'p.is_system',
+                'u.username as created_by',
+                'u2.username as updated_by',
+            ]
         );
 
 
@@ -59,12 +74,14 @@ class PermissionsRepository
     public function findByName($resource, $action): ?array
     {
         $result = $this->db->select(
-            "permissions",
+            "permissions p
+            LEFT JOIN resources r on r.id = p.resource_id
+            ",
             [
-                'resource' => $resource,
-                'action' => $action
+                'r.uuid' => $resource,
+                'p.action' => $action
             ],
-            ['id', 'uuid', 'resource', 'action', 'description', 'created_at', 'is_system']
+            ['p.id', 'p.uuid', 'r.name as resource', 'p.action', 'p.description', 'p.created_at', 'p.is_system']
         );
 
 
@@ -77,10 +94,10 @@ class PermissionsRepository
     {
 
         $id = $this->db->insert(
-            'permissions',
+            "permissions",
             [
                 'uuid' => $permission['uuid'],
-                'resource' => $permission['resource'],
+                'resource_id' => $permission['resource_id'],
                 'action' => $permission['action'],
                 'description' => $permission['description'],
                 'created_at' => $permission['created_at'],
@@ -112,5 +129,34 @@ class PermissionsRepository
 
     }
 
+    public function getResourceIdByUUID($uuid): ?array
+    {
 
+        return $this->db->select(
+            "resources",
+            ["uuid" => $uuid],
+            [
+                "id"
+            ]
+        )[0];
+    }
+
+
+    public function getResources(): ?array
+    {
+        return $this->db->select(
+            "resources",
+            [],
+            [
+                "uuid",
+                "name",
+                "display_name",
+                "description",
+                "is_active",
+                "created_at",
+                "updated_at",
+
+            ]
+        );
+    }
 }
